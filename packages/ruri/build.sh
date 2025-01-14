@@ -1,5 +1,5 @@
 TERMUX_PKG_HOMEPAGE=https://github.com/Moe-hacker/ruri
-TERMUX_PKG_DESCRIPTION="Lightweight user-friendly Linux container implementation with zero runtime dependency."
+TERMUX_PKG_DESCRIPTION="Lightweight user-friendly Linux container implementation."
 TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_MAINTAINER="@George-Seven"
 _COMMIT=620e61b0fb54f0966fd7621edfb94c5a6183070b
