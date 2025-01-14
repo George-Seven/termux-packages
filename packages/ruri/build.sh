@@ -30,7 +30,6 @@ termux_step_post_get_source() {
 }
 
 termux_step_configure() {
-	CFLAGS+=" $CPPFLAGS"
 	rm -rf ruri
 	make config
 }
