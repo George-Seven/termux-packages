@@ -1,0 +1,11 @@
+--- xemu/util/oslib-posix.c	2025-01-09 10:55:53.199957948 +0530
++++ xemu.mod/util/oslib-posix.c	2025-01-09 15:45:02.139951330 +0530
+@@ -863,7 +863,7 @@
+                                                unsigned int nskip,
+                                                int open_max)
+ {
+-#ifdef CONFIG_CLOSE_RANGE
++#if defined(CONFIG_CLOSE_RANGE) && !defined(__ANDROID__)
+     int max_fd = open_max - 1;
+     int first = 0, last;
+     unsigned int cur_skip = 0;
