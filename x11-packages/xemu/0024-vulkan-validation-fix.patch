@@ -5,13 +5,13 @@
      VkMemoryRequirements memory_requirements;
      vkGetImageMemoryRequirements(r->device, d->image, &memory_requirements);
 -
-+    
++
 +    VkMemoryDedicatedAllocateInfo dedicated_alloc_info = {
 +        .sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO,
 +        .image = d->image,  // Specify the image requiring dedicated allocation
 +        .buffer = VK_NULL_HANDLE,
 +    };
-+    
++
      VkMemoryAllocateInfo alloc_info = {
          .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
          .allocationSize = memory_requirements.size,
@@ -21,7 +21,7 @@
 +        .pNext = &dedicated_alloc_info,  // Add dedicated allocation info to the chain
      };
 -
-+    
++
      VkExportMemoryAllocateInfo export_memory_alloc_info = {
          .sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO,
          .handleTypes =
@@ -32,7 +32,7 @@
 -            ,
      };
 -    alloc_info.pNext = &export_memory_alloc_info;
-+    
++
 +    // Chain the export memory info to the dedicated allocation info
 +    dedicated_alloc_info.pNext = &export_memory_alloc_info;
  
