@@ -2,28 +2,13 @@ TERMUX_PKG_HOMEPAGE=https://www.capstone-engine.org/
 TERMUX_PKG_DESCRIPTION="Lightweight multi-platform, multi-architecture disassembly framework"
 TERMUX_PKG_LICENSE="BSD"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="5.0.3"
-TERMUX_PKG_SRCURL=https://github.com/capstone-engine/capstone/archive/${TERMUX_PKG_VERSION}.tar.gz
-TERMUX_PKG_SHA256=3970c63ca1f8755f2c8e69b41432b710ff634f1b45ee4e5351defec4ec8e1753
+TERMUX_PKG_VERSION="5.0.7"
+TERMUX_PKG_SRCURL="https://github.com/capstone-engine/capstone/archive/refs/tags/${TERMUX_PKG_VERSION}.tar.gz"
+TERMUX_PKG_SHA256=6427a724726d161d1e05fb49fff8cd0064f67836c04ffca3c11d6d859e719caa
 TERMUX_PKG_AUTO_UPDATE=true
+TERMUX_PKG_UPDATE_VERSION_REGEXP="\d+\.\d+\.\d+(?!-)"
 TERMUX_PKG_BREAKS="capstone-dev"
 TERMUX_PKG_REPLACES="capstone-dev"
-
-termux_pkg_auto_update() {
-	local latest_version
-	latest_version="$(termux_github_api_get_tag "$TERMUX_PKG_SRCURL")"
-
-	if [[ -z "$latest_version" ]]; then
-		termux_error_exit "ERROR: Failed to get latest version."
-	fi
-
-	if [[ "$latest_version" =~ ^[0-9]+(\.[0-9]+)+$ ]]; then
-		termux_pkg_upgrade_version "$latest_version"
-	else
-		echo "WARN: Found non-stable version ($latest_version) marked as latest release. Skipping..."
-		return
-	fi
-}
 
 termux_step_post_get_source() {
 	termux_setup_cmake

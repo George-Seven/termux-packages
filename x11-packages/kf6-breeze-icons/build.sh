@@ -1,12 +1,12 @@
-TERMUX_PKG_HOMEPAGE='https://community.kde.org/Frameworks'
+TERMUX_PKG_HOMEPAGE='https://invent.kde.org/frameworks/breeze-icons'
 TERMUX_PKG_DESCRIPTION='Breeze icon theme'
 TERMUX_PKG_LICENSE="GPL-3.0, LGPL-2.1"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="6.10.0"
-TERMUX_PKG_SRCURL=https://download.kde.org/stable/frameworks/${TERMUX_PKG_VERSION%.*}/breeze-icons-${TERMUX_PKG_VERSION}.tar.xz
-TERMUX_PKG_SHA256=fe458eb957be655ea801d41f1dd3c4cfa829e7ba6040b38d69d09f6b69c31e2a
+TERMUX_PKG_VERSION="6.23.0"
+TERMUX_PKG_SRCURL="https://download.kde.org/stable/frameworks/${TERMUX_PKG_VERSION%.*}/breeze-icons-${TERMUX_PKG_VERSION}.tar.xz"
+TERMUX_PKG_SHA256=f12591f5714e053d8cef232ef41c36dc461516e4b89eeade77cc1947a33ddd33
 TERMUX_PKG_DEPENDS="qt6-qtbase"
-TERMUX_PKG_BUILD_DEPENDS="extra-cmake-modules (>= ${TERMUX_PKG_VERSION}), python-lxml, qt6-qtbase-cross-tools"
+TERMUX_PKG_BUILD_DEPENDS="extra-cmake-modules (>= ${TERMUX_PKG_VERSION%.*}), python-lxml, qt6-qtbase-cross-tools"
 TERMUX_PKG_AUTO_UPDATE=true
 TERMUX_PKG_HOSTBUILD=true
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
@@ -20,25 +20,9 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 
 termux_step_host_build() {
 	termux_setup_cmake
-	cd "$TERMUX_PKG_SRCDIR/src/tools"
-	# patch CMakeLists.txt
-	mv CMakeLists.txt CMakeLists.txt.bak
-	cat > CMakeLists.txt <<-EOF
-	cmake_minimum_required(VERSION 3.16)
-	add_link_options("-Wl,-rpath=${TERMUX_PREFIX}/opt/qt6/cross/lib")
-
-	find_package(Qt6 REQUIRED COMPONENTS Core Widgets Xml)
-
-	function(ecm_mark_nongui_executable)
-	endfunction()
-
-	EOF
-	cat CMakeLists.txt.bak >> CMakeLists.txt
-	cat >> CMakeLists.txt <<-EOF
-
-	install(TARGETS qrcAlias DESTINATION bin)
-	install(TARGETS generate-symbolic-dark DESTINATION bin)
-	EOF
+	pushd "$TERMUX_PKG_SRCDIR/tools"
+	cp CMakeLists.txt CMakeLists.txt.bak
+	patch -p1 -i "$TERMUX_PKG_BUILDER_DIR"/tools-CMakeLists.txt.diff
 
 	mkdir -p build
 	cmake -B build \
@@ -47,11 +31,15 @@ termux_step_host_build() {
 		.
 	cmake --build build
 	mv CMakeLists.txt.bak CMakeLists.txt
+	popd
+
+	cp "$TERMUX_PKG_SRCDIR"/tools/build/{generate-symbolic-dark,qrcAlias} "$TERMUX_PKG_HOSTBUILD_DIR/"
 }
 
 termux_step_pre_configure() {
 	# this is a workaround for build-all.sh issue
 	TERMUX_PKG_DEPENDS+=", kf6-breeze-icons-data"
 
-	sed -e 's|qrcAlias -o|'"$TERMUX_PKG_SRCDIR"'/src/tools/build/qrcAlias -o|' -i src/lib/CMakeLists.txt
+	sed -e 's|$<TARGET_FILE:generate-symbolic-dark>|'"$TERMUX_PKG_HOSTBUILD_DIR"'/generate-symbolic-dark|' -i icons/CMakeLists.txt
+	sed -e 's|$<TARGET_FILE:qrcAlias> -o|'"$TERMUX_PKG_HOSTBUILD_DIR"'/qrcAlias -o|' -i icons/CMakeLists.txt
 }

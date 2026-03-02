@@ -19,8 +19,8 @@ termux_download_deb_pac() {
 	# The data.tar.xz extraction by termux_step_get_dependencies would
 	# extract files to different prefix than TERMUX_PREFIX and builds
 	# would fail when looking for -I$TERMUX_PREFIX/include files.
-	if [ "$TERMUX_REPO_PACKAGE" != "$TERMUX_APP_PACKAGE" ]; then
-		echo "Ignoring download of $PKG_FILE since repo package name ($TERMUX_REPO_PACKAGE) does not equal app package name ($TERMUX_APP_PACKAGE)"
+	if [ "$TERMUX_REPO_APP__PACKAGE_NAME" != "$TERMUX_APP_PACKAGE" ]; then
+		echo "Ignoring download of $PKG_FILE since repo package name ($TERMUX_REPO_APP__PACKAGE_NAME) does not equal app package name ($TERMUX_APP_PACKAGE)"
 		return 1
 	fi
 
@@ -43,7 +43,7 @@ termux_download_deb_pac() {
 			for arch in 'aarch64' 'arm' 'i686' 'x86_64'; do
 				if [ -f "${TERMUX_COMMON_CACHEDIR}-${arch}/${PACKAGE_FILE_PATH}" ]; then
 					if [ "$TERMUX_REPO_PKG_FORMAT" = "debian" ]; then
-						read -d "\n" PKG_PATH PKG_HASH <<<$(./scripts/get_hash_from_file.py "${TERMUX_COMMON_CACHEDIR}-${arch}/$PACKAGE_FILE_PATH" $PACKAGE $VERSION)
+						read -rd "\n" PKG_PATH PKG_HASH < <(./scripts/get_hash_from_file.py "${TERMUX_COMMON_CACHEDIR}-${arch}/$PACKAGE_FILE_PATH" "$PACKAGE" "$VERSION")
 					elif [ "$TERMUX_REPO_PKG_FORMAT" = "pacman" ]; then
 						if [ "$TERMUX_WITHOUT_DEPVERSION_BINDING" = "true" ] || [ $(jq -r '."'$PACKAGE'"."VERSION"' "${TERMUX_COMMON_CACHEDIR}-${arch}/$PACKAGE_FILE_PATH") = "${VERSION_PACMAN}" ]; then
 							PKG_HASH=$(jq -r '."'$PACKAGE'"."SHA256SUM"' "${TERMUX_COMMON_CACHEDIR}-${arch}/$PACKAGE_FILE_PATH")
@@ -71,9 +71,9 @@ termux_download_deb_pac() {
 			# check for package in aarch64 Packages
 			# instead.
 			if [ "$TERMUX_REPO_PKG_FORMAT" = "debian" ]; then
-				read -d "\n" PKG_PATH PKG_HASH <<<$(./scripts/get_hash_from_file.py "${TERMUX_COMMON_CACHEDIR}-aarch64/$PACKAGE_FILE_PATH" $PACKAGE $VERSION)
+				read -rd "\n" PKG_PATH PKG_HASH < <(./scripts/get_hash_from_file.py "${TERMUX_COMMON_CACHEDIR}-aarch64/$PACKAGE_FILE_PATH" "$PACKAGE" "$VERSION")
 			elif [ "$TERMUX_REPO_PKG_FORMAT" = "pacman" ]; then
-				if [ "$TERMUX_WITHOUT_DEPVERSION_BINDING" = "true" ] || [ $(jq -r '."'$PACKAGE'"."VERSION"' "${TERMUX_COMMON_CACHEDIR}-aarch64/$PACKAGE_FILE_PATH") = "${VERSION_PACMAN}"]; then
+				if [ "$TERMUX_WITHOUT_DEPVERSION_BINDING" = "true" ] || [ $(jq -r '."'$PACKAGE'"."VERSION"' "${TERMUX_COMMON_CACHEDIR}-aarch64/$PACKAGE_FILE_PATH") = "${VERSION_PACMAN}" ]; then
 					PKG_HASH=$(jq -r '."'$PACKAGE'"."SHA256SUM"' "${TERMUX_COMMON_CACHEDIR}-aarch64/$PACKAGE_FILE_PATH")
 					PKG_PATH=$(jq -r '."'$PACKAGE'"."FILENAME"' "${TERMUX_COMMON_CACHEDIR}-aarch64/$PACKAGE_FILE_PATH")
 					PKG_PATH="aarch64/${PKG_PATH}"
@@ -91,7 +91,7 @@ termux_download_deb_pac() {
 			fi
 		elif [ -f "${TERMUX_COMMON_CACHEDIR}-${PACKAGE_ARCH}/${PACKAGE_FILE_PATH}" ]; then
 			if [ "$TERMUX_REPO_PKG_FORMAT" = "debian" ]; then
-				read -d "\n" PKG_PATH PKG_HASH <<<$(./scripts/get_hash_from_file.py "${TERMUX_COMMON_CACHEDIR}-${PACKAGE_ARCH}/$PACKAGE_FILE_PATH" $PACKAGE $VERSION)
+				read -rd "\n" PKG_PATH PKG_HASH < <(./scripts/get_hash_from_file.py "${TERMUX_COMMON_CACHEDIR}-${PACKAGE_ARCH}/$PACKAGE_FILE_PATH" "$PACKAGE" "$VERSION")
 			elif [ "$TERMUX_REPO_PKG_FORMAT" = "pacman" ]; then
 				if [ "$TERMUX_WITHOUT_DEPVERSION_BINDING" = "true" ] || [ $(jq -r '."'$PACKAGE'"."VERSION"' "${TERMUX_COMMON_CACHEDIR}-${PACKAGE_ARCH}/$PACKAGE_FILE_PATH") = "${VERSION_PACMAN}" ]; then
 					PKG_HASH=$(jq -r '."'$PACKAGE'"."SHA256SUM"' "${TERMUX_COMMON_CACHEDIR}-${PACKAGE_ARCH}/$PACKAGE_FILE_PATH")
@@ -123,5 +123,5 @@ termux_download_deb_pac() {
 
 # Make script standalone executable as well as sourceable
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-	termux_download "$@"
+	termux_download_deb_pac "$@"
 fi

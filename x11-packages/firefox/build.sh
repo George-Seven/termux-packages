@@ -2,22 +2,27 @@ TERMUX_PKG_HOMEPAGE=https://www.mozilla.org/firefox
 TERMUX_PKG_DESCRIPTION="Mozilla Firefox web browser"
 TERMUX_PKG_LICENSE="MPL-2.0"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="134.0.1"
-TERMUX_PKG_REVISION=1
-TERMUX_PKG_SRCURL=https://archive.mozilla.org/pub/firefox/releases/${TERMUX_PKG_VERSION}/source/firefox-${TERMUX_PKG_VERSION}.source.tar.xz
-TERMUX_PKG_SHA256=e3a1853ce70f0fc0007a40a5000d8c9ca7ddd42a4de7d1eb52b0b22fcc2265e5
+TERMUX_PKG_VERSION="148.0"
+TERMUX_PKG_SRCURL="https://archive.mozilla.org/pub/firefox/releases/${TERMUX_PKG_VERSION}/source/firefox-${TERMUX_PKG_VERSION}.source.tar.xz"
+TERMUX_PKG_SHA256=ec93e5040a23b7dbe9ec77eb4a7ccda9820856d7851bf2f617f3673b6354cb6f
 # ffmpeg and pulseaudio are dependencies through dlopen(3):
 TERMUX_PKG_DEPENDS="ffmpeg, fontconfig, freetype, gdk-pixbuf, glib, gtk3, libandroid-shmem, libandroid-spawn, libc++, libcairo, libevent, libffi, libice, libicu, libjpeg-turbo, libnspr, libnss, libpixman, libsm, libvpx, libwebp, libx11, libxcb, libxcomposite, libxdamage, libxext, libxfixes, libxrandr, libxtst, pango, pulseaudio, zlib"
 TERMUX_PKG_BUILD_DEPENDS="libcpufeatures, libice, libsm"
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_AUTO_UPDATE=true
 
+# NOTE:
+# Firefox's patches are also used by Thunderbird.
+# To avoid issues and reduce duplication the shared 00XX-${topic}.patch files
+# are symlinked by Thunderbird into x11-packages/thunderbird
+# Firefox specific patches should start at 1001-${topic}.patch
+
 termux_pkg_auto_update() {
 	# https://archive.mozilla.org/pub/firefox/releases/latest/README.txt
 	local e=0
 	local api_url="https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=en-US"
 	local api_url_r=$(curl -s "${api_url}")
-	local latest_version=$(echo "${api_url_r}" | sed -nE "s/.*firefox-(.*).tar.bz2.*/\1/p")
+	local latest_version=$(echo "${api_url_r}" | sed -nE "s/.*firefox-(.*).tar.xz.*/\1/p")
 	[[ -z "${api_url_r}" ]] && e=1
 	[[ -z "${latest_version}" ]] && e=1
 
@@ -48,25 +53,17 @@ termux_step_post_get_source() {
 	local f="media/ffvpx/config_unix_aarch64.h"
 	echo "Applying sed substitution to ${f}"
 	sed -E '/^#define (CONFIG_LINUX_PERF|HAVE_SYSCTL) /s/1$/0/' -i ${f}
+
+	# Update Cargo.toml to use the patched cc
+	sed -i 's|^\(\[patch\.crates-io\]\)$|\1\ncc = { path = "third_party/rust/cc" }|g' \
+		Cargo.toml
+	(
+		termux_setup_rust
+		cargo update -p cc
+	)
 }
 
 termux_step_pre_configure() {
-	# XXX: flang toolchain provides libclang.so
-	termux_setup_flang
-	local __fc_dir="$(dirname $(command -v $FC))"
-	local __flang_toolchain_folder="$(realpath "$__fc_dir"/..)"
-	if [ ! -d "$TERMUX_PKG_TMPDIR/firefox-toolchain" ]; then
-		rm -rf "$TERMUX_PKG_TMPDIR"/firefox-toolchain-tmp
-		mv "$__flang_toolchain_folder" "$TERMUX_PKG_TMPDIR"/firefox-toolchain-tmp
-
-		cp "$(command -v "$CC")" "$TERMUX_PKG_TMPDIR"/firefox-toolchain-tmp/bin/
-		cp "$(command -v "$CXX")" "$TERMUX_PKG_TMPDIR"/firefox-toolchain-tmp/bin/
-		cp "$(command -v "$CPP")" "$TERMUX_PKG_TMPDIR"/firefox-toolchain-tmp/bin/
-
-		mv "$TERMUX_PKG_TMPDIR"/firefox-toolchain-tmp "$TERMUX_PKG_TMPDIR"/firefox-toolchain
-	fi
-	export PATH="$TERMUX_PKG_TMPDIR/firefox-toolchain/bin:$PATH"
-
 	termux_setup_nodejs
 	termux_setup_rust
 
@@ -84,7 +81,7 @@ termux_step_pre_configure() {
 	export HOST_CC=$(command -v clang)
 	export HOST_CXX=$(command -v clang++)
 
-	export BINDGEN_CFLAGS="--target=$CCTERMUX_HOST_PLATFORM --sysroot=$TERMUX_PKG_TMPDIR/firefox-toolchain/sysroot"
+	export BINDGEN_CFLAGS="--target=$CCTERMUX_HOST_PLATFORM --sysroot=$TERMUX_STANDALONE_TOOLCHAIN/sysroot"
 	local env_name=BINDGEN_EXTRA_CLANG_ARGS_${CARGO_TARGET_NAME@U}
 	env_name=${env_name//-/_}
 	export $env_name="$BINDGEN_CFLAGS"
@@ -122,7 +119,7 @@ END
 }
 
 termux_step_make() {
-	./mach build
+	./mach build -j "$TERMUX_PKG_MAKE_PROCESSES"
 	./mach buildsymbols
 }
 
@@ -130,6 +127,19 @@ termux_step_make_install() {
 	./mach install
 
 	install -Dm644 -t "${TERMUX_PREFIX}/share/applications" "${TERMUX_PKG_BUILDER_DIR}/firefox.desktop"
+
+	# Install icons as Arch Linux does
+	local i theme=official
+	for i in 16 22 24 32 48 64 128 256; do
+		install -Dvm644 "browser/branding/$theme/default$i.png" \
+			"$TERMUX_PREFIX/share/icons/hicolor/${i}x${i}/apps/$TERMUX_PKG_NAME.png"
+	done
+	install -Dvm644 "browser/branding/$theme/content/about-logo.png" \
+		"$TERMUX_PREFIX/share/icons/hicolor/192x192/apps/$TERMUX_PKG_NAME.png"
+	install -Dvm644 "browser/branding/$theme/content/about-logo@2x.png" \
+		"$TERMUX_PREFIX/share/icons/hicolor/384x384/apps/$TERMUX_PKG_NAME.png"
+	install -Dvm644 "browser/branding/$theme/content/about-logo.svg" \
+		"$TERMUX_PREFIX/share/icons/hicolor/scalable/apps/$TERMUX_PKG_NAME.svg"
 }
 
 termux_step_post_make_install() {

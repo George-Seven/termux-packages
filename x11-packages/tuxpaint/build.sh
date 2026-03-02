@@ -2,10 +2,12 @@ TERMUX_PKG_HOMEPAGE=https://tuxpaint.org/
 TERMUX_PKG_DESCRIPTION="A free, award-winning drawing program for children ages 3 to 12"
 TERMUX_PKG_LICENSE="GPL-2.0"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="0.9.34"
+TERMUX_PKG_VERSION="0.9.35"
+TERMUX_PKG_REVISION=1
 TERMUX_PKG_SRCURL=https://downloads.sourceforge.net/tuxpaint/tuxpaint-${TERMUX_PKG_VERSION}.tar.gz
-TERMUX_PKG_SHA256=b761df5ed386a9e04a6809ab3e0cbf2126f10b770527cb2b5f190ff5e370ed03
-TERMUX_PKG_DEPENDS="fontconfig, fribidi, glib, libandroid-wordexp, libcairo, libimagequant, libpaper, libpng, librsvg, pango, sdl2, sdl2-gfx, sdl2-image, sdl2-mixer, sdl2-pango, sdl2-ttf, zlib"
+TERMUX_PKG_SHA256=c1c18af91be77e94fdaab2c928204c4c39ba39ac5da2f441aaf2ecab6d8bd0ad
+TERMUX_PKG_DEPENDS="fontconfig, fribidi, glib, libandroid-wordexp, libcairo, libimagequant, libpaper, libpng, librsvg, pango, sdl2 | sdl2-compat, sdl2-gfx, sdl2-image, sdl2-mixer, sdl2-pango, sdl2-ttf, zlib"
+TERMUX_PKG_ANTI_BUILD_DEPENDS="sdl2-compat"
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_HOSTBUILD=true
 TERMUX_PKG_AUTO_UPDATE=true
@@ -37,7 +39,7 @@ termux_step_pre_configure() {
 	local _PREFIX_FOR_BUILD="$TERMUX_PKG_HOSTBUILD_DIR/prefix"
 	export PATH="$_PREFIX_FOR_BUILD/bin:$PATH"
 	export XDG_DATA_HOME="$TERMUX_PREFIX/share" XDG_DATA_DIRS="$TERMUX_PREFIX" XDG_CURRENT_DESKTOP="X-Generic"
-	
+
 	# Disabling gtk-update-icon-cache
 	ln -s /usr/bin/true "$_PREFIX_FOR_BUILD/bin/update-desktop-database" ||:
 	ln -s /usr/bin/true "$_PREFIX_FOR_BUILD/bin/gtk-update-icon-cache" ||:

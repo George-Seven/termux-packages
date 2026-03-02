@@ -1,5 +1,5 @@
 termux_step_configure_cmake() {
-	if [ "$TERMUX_CMAKE_BUILD" = Ninja ]; then
+	if [ "$TERMUX_PKG_CMAKE_BUILD" = Ninja ]; then
 		MAKE_PROGRAM_PATH=$(command -v ninja)
 	else
 		MAKE_PROGRAM_PATH=$(command -v make)
@@ -33,7 +33,7 @@ termux_step_configure_cmake() {
 
 	# XXX: CMAKE_{AR,RANLIB} needed for at least jsoncpp build to not
 	# pick up cross compiled binutils tool in $TERMUX_PREFIX/bin:
-	cmake -G "$TERMUX_CMAKE_BUILD" "$TERMUX_PKG_SRCDIR" \
+	cmake -G "$TERMUX_PKG_CMAKE_BUILD" "$TERMUX_PKG_SRCDIR" \
 		-DCMAKE_AR="$(command -v $AR)" \
 		-DCMAKE_UNAME="$(command -v uname)" \
 		-DCMAKE_RANLIB="$(command -v $RANLIB)" \
@@ -45,8 +45,9 @@ termux_step_configure_cmake() {
 		-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER \
 		-DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=ONLY \
 		-DCMAKE_FIND_ROOT_PATH_MODE_LIBRARY=ONLY \
-		-DCMAKE_INSTALL_PREFIX=$TERMUX_PREFIX \
-		-DCMAKE_INSTALL_LIBDIR=$TERMUX_PREFIX/lib \
+		-DCMAKE_INSTALL_PREFIX="$TERMUX_PREFIX" \
+		-DCMAKE_INSTALL_LIBDIR="$TERMUX__PREFIX__LIB_DIR" \
+		-DCMAKE_INSTALL_INCLUDEDIR="$TERMUX__PREFIX__INCLUDE_DIR" \
 		-DCMAKE_MAKE_PROGRAM=$MAKE_PROGRAM_PATH \
 		-DCMAKE_SKIP_INSTALL_RPATH=ON \
 		-DCMAKE_USE_SYSTEM_LIBRARIES=True \

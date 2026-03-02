@@ -2,13 +2,19 @@ TERMUX_PKG_HOMEPAGE=https://shotcut.org/
 TERMUX_PKG_DESCRIPTION="Cross-platform Qt based Video Editor"
 TERMUX_PKG_LICENSE="GPL-3.0"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="24.11.17"
-TERMUX_PKG_REVISION=1
-TERMUX_PKG_SRCURL=https://github.com/mltframework/shotcut/archive/refs/tags/v$TERMUX_PKG_VERSION.tar.gz
-TERMUX_PKG_SHA256=cb6a3a819b3ae56325406665273347328ae973250c02a832fce609ee6c0f6b13
-TERMUX_PKG_DEPENDS="ffmpeg, fftw, frei0r-plugins, mlt, libx264, libvpx, lame, ladspa-sdk, movit, qt6-qtbase, qt6-qtcharts, qt6-qtdeclarative, qt6-qtimageformats, qt6-qtmultimedia, qt6-qttranslations, sdl2"
+TERMUX_PKG_VERSION="26.2.26"
+TERMUX_PKG_SRCURL="https://github.com/mltframework/shotcut/archive/refs/tags/v$TERMUX_PKG_VERSION.tar.gz"
+TERMUX_PKG_SHA256=b5c840a459eaf4ad9e0ad7a02d782678207f9102cfce7f129f413fe2c0cb3ca8
+TERMUX_PKG_DEPENDS="ffmpeg, fftw, frei0r-plugins, mlt, libx264, libvpx, lame, ladspa-sdk, movit, qt6-qtbase, qt6-qtcharts, qt6-qtdeclarative, qt6-qtimageformats, qt6-qtmultimedia, qt6-qttranslations, qt6-qtwebsockets, sdl2 | sdl2-compat"
 TERMUX_PKG_BUILD_DEPENDS="qt6-qttools"
+TERMUX_PKG_ANTI_BUILD_DEPENDS="sdl2-compat"
 TERMUX_PKG_AUTO_UPDATE=true
+# if CMAKE_SYSTEM_NAME is left as Android,
+# will fail to detect Qt6::DBus and fail to compile
+# https://github.com/mltframework/shotcut/commit/f0f5f18125d73e55e7f32ff1b106e24558de1cf5
+TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
+-DCMAKE_SYSTEM_NAME=Linux
+"
 
 termux_step_pre_configure(){
 	CXXFLAGS+=' -Wno-c++11-narrowing'

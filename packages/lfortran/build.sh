@@ -2,17 +2,24 @@ TERMUX_PKG_HOMEPAGE=https://lfortran.org/
 TERMUX_PKG_DESCRIPTION="A modern open-source interactive Fortran compiler"
 TERMUX_PKG_LICENSE="BSD 3-Clause"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION=0.19.0
-TERMUX_PKG_REVISION=1
-TERMUX_PKG_SRCURL=git+https://github.com/lfortran/lfortran
-TERMUX_PKG_AUTO_UPDATE=false
+TERMUX_PKG_VERSION="0.60.0"
+TERMUX_PKG_SRCURL=https://github.com/lfortran/lfortran/releases/download/v$TERMUX_PKG_VERSION/lfortran-$TERMUX_PKG_VERSION.tar.gz
+TERMUX_PKG_SHA256=6cd36a260fd24f7bba8817d1d21a8eb29e5bebbea4241bf7ce71572cd3c8f7ba
 TERMUX_PKG_DEPENDS="clang, libandroid-complex-math, libc++, ncurses, zlib, zstd"
-TERMUX_PKG_BUILD_DEPENDS="libllvm-static"
+TERMUX_PKG_BUILD_DEPENDS="libkokkos, libkokkos-static, libllvm-static"
 TERMUX_PKG_SUGGESTS="libkokkos"
+TERMUX_PKG_AUTO_UPDATE=true
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 -DBUILD_SHARED_LIBS=ON
--DWITH_LLVM=yes
+-DCMAKE_INSTALL_LIBDIR=lib/lfortran
 -DLLVM_DIR=$TERMUX_PREFIX/lib/cmake/llvm
+-DWITH_BFD=no
+-DWITH_LIBUNWIND=no
+-DWITH_KOKKOS=yes
+-DWITH_LLVM=yes
+-DWITH_LSP=yes
+-DWITH_PREBUILT_FORTRAN=$TERMUX_PKG_HOSTBUILD_DIR/src/bin/lfortran
+-DWITH_RUNTIME_LIBRARY=yes
 "
 TERMUX_PKG_HOSTBUILD=true
 
@@ -24,24 +31,15 @@ TERMUX_PKG_HOSTBUILD=true
 # ^             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ```
 # Furthermore libkokkos does not support ILP32
-TERMUX_PKG_BLACKLISTED_ARCHES="arm, i686"
+TERMUX_PKG_EXCLUDED_ARCHES="arm, i686"
 
 termux_step_host_build() {
 	termux_setup_cmake
 
-	( cd $TERMUX_PKG_SRCDIR && sh build0.sh )
 	cmake $TERMUX_PKG_SRCDIR
 	make -j $TERMUX_PKG_MAKE_PROCESSES
 }
 
 termux_step_pre_configure() {
-	PATH=$TERMUX_PKG_HOSTBUILD_DIR/src/bin:$PATH
-	echo "Applying CMakeLists.txt.diff"
-	sed "s|@TERMUX_PKG_HOSTBUILD_DIR@|${TERMUX_PKG_HOSTBUILD_DIR}|g" \
-		$TERMUX_PKG_BUILDER_DIR/CMakeLists.txt.diff \
-		| patch --silent -p1
-
-	( cd $TERMUX_PKG_SRCDIR && sh build0.sh )
-
 	LDFLAGS+=" -landroid-complex-math -lm"
 }

@@ -2,16 +2,16 @@ TERMUX_PKG_HOMEPAGE=https://janet-lang.org
 TERMUX_PKG_DESCRIPTION="Development library for Janet"
 TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_MAINTAINER="Komo @mbekkomo"
-TERMUX_PKG_VERSION=1.37.1
+TERMUX_PKG_VERSION="1.41.2"
 TERMUX_PKG_SRCURL=https://github.com/janet-lang/janet/archive/refs/tags/v${TERMUX_PKG_VERSION}.tar.gz
-TERMUX_PKG_SHA256=85a87115fb7b59a3fb4dab7d291627ce109eecdcf84b403ec8787ef54082519f
+TERMUX_PKG_SHA256=168e97e1b790f6e9d1e43685019efecc4ee473d6b9f8c421b49c195336c0b725
 TERMUX_PKG_DEPENDS="libandroid-spawn"
 TERMUX_PKG_AUTO_UPDATE=true
 TERMUX_PKG_HOSTBUILD=true
 TERMUX_PKG_BUILD_IN_SRC=true
 
 termux_step_host_build() {
-	cd "${TERMUX_PKG_SRCDIR}" || termux_error_exit "Error: failed to perform host-build for janet"
+	cd "${TERMUX_PKG_SRCDIR}" || termux_error_exit "failed to perform host-build for janet"
 
 	cat >> config.mk <<-EOF
 	HOSTCC=$(command -v gcc)

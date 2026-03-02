@@ -3,10 +3,11 @@ TERMUX_PKG_DESCRIPTION="A Rust compiler front-end for IDEs"
 TERMUX_PKG_LICENSE="Apache-2.0, MIT"
 TERMUX_PKG_LICENSE_FILE="LICENSE-APACHE, LICENSE-MIT"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="20250113"
+TERMUX_PKG_VERSION="20260223"
 _VERSION=${TERMUX_PKG_VERSION:0:4}-${TERMUX_PKG_VERSION:4:2}-${TERMUX_PKG_VERSION:6:2}
-TERMUX_PKG_SRCURL=https://github.com/rust-lang/rust-analyzer/archive/refs/tags/${_VERSION}.tar.gz
-TERMUX_PKG_SHA256=937198b4f678b64b935857e3302bb7c1f0e39fe948172463b7c38aab98a1d73a
+TERMUX_PKG_SRCURL="https://github.com/rust-lang/rust-analyzer/archive/refs/tags/${_VERSION}.tar.gz"
+TERMUX_PKG_SHA256=8a602142cb466839fac570c0ebb91c19de87b772aa4e3adb0849927f2835490a
+TERMUX_PKG_REPOLOGY_METADATA_VERSION="${_VERSION}"
 TERMUX_PKG_DEPENDS="rust-src"
 TERMUX_PKG_ANTI_BUILD_DEPENDS="rust-src"
 TERMUX_PKG_BUILD_IN_SRC=true
@@ -56,6 +57,7 @@ termux_step_pre_configure() {
 }
 
 termux_step_make() {
+	export CFG_RELEASE=1
 	cargo build --jobs "${TERMUX_PKG_MAKE_PROCESSES}" --target "${CARGO_TARGET_NAME}" --release
 }
 

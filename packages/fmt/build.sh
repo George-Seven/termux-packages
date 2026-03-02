@@ -3,9 +3,9 @@ TERMUX_PKG_DESCRIPTION="Open-source formatting library for C++"
 TERMUX_PKG_LICENSE="BSD"
 TERMUX_PKG_LICENSE_FILE="LICENSE"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION=1:11.1.2
-TERMUX_PKG_SRCURL=https://github.com/fmtlib/fmt/archive/${TERMUX_PKG_VERSION#*:}.tar.gz
-TERMUX_PKG_SHA256=d8773cf062cc806d4dd4df658111f15ba7a2c9c65db5084d2491696828b1eb97
+TERMUX_PKG_VERSION=1:11.2.0
+TERMUX_PKG_SRCURL=https://github.com/fmtlib/fmt/archive/refs/tags/${TERMUX_PKG_VERSION#*:}.tar.gz
+TERMUX_PKG_SHA256=bc23066d87ab3168f27cef3e97d545fa63314f5c79df5ea444d41d56f962c6af
 # Avoid silently breaking build of revdeps:
 TERMUX_PKG_AUTO_UPDATE=false
 TERMUX_PKG_DEPENDS="libc++"

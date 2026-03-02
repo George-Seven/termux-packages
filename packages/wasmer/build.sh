@@ -3,15 +3,15 @@ TERMUX_PKG_DESCRIPTION="A fast and secure WebAssembly runtime"
 TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_LICENSE_FILE="ATTRIBUTIONS, LICENSE"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="5.0.4"
+TERMUX_PKG_VERSION="7.0.1"
 TERMUX_PKG_SRCURL=https://github.com/wasmerio/wasmer/archive/refs/tags/v${TERMUX_PKG_VERSION}.tar.gz
-TERMUX_PKG_SHA256=e6f0df11dd4647fa3d9177ed298a6e3afd2b5be6ea4494c00c2074c90681ad27
+TERMUX_PKG_SHA256=1cd67765b834dd509d29fd7420819af37af852b877bc32b31c07bf92d27ffd31
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_NO_STATICSPLIT=true
 TERMUX_PKG_AUTO_UPDATE=true
 
 # missing support in wasmer-emscripten, wasmer-vm
-TERMUX_PKG_BLACKLISTED_ARCHES="arm, i686"
+TERMUX_PKG_EXCLUDED_ARCHES="arm, i686"
 
 termux_step_pre_configure() {
 	# https://github.com/rust-lang/compiler-builtins#unimplemented-functions
@@ -74,7 +74,7 @@ termux_step_make() {
 		--release \
 		--manifest-path=lib/cli/Cargo.toml \
 		--no-default-features \
-		--features sys,headless-minimal \
+		--features sys,headless-minimal,${compilers} \
 		--bin wasmer-headless
 
 	echo "make build-capi-headless"
@@ -85,7 +85,7 @@ termux_step_make() {
 		--release \
 		--manifest-path lib/c-api/Cargo.toml \
 		--no-default-features \
-		--features compiler-headless,wasi,webc_runner \
+		--features compiler-headless,wasi,webc_runner,${compilers} \
 		--target-dir target/headless
 }
 

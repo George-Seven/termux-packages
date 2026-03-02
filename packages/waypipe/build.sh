@@ -3,12 +3,12 @@ TERMUX_PKG_DESCRIPTION="A proxy for Wayland clients"
 TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_LICENSE_FILE="LICENSE.MIT"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="0.10.0"
+TERMUX_PKG_VERSION="0.11.0"
 TERMUX_PKG_SRCURL=https://gitlab.freedesktop.org/mstoeckl/waypipe/-/archive/v${TERMUX_PKG_VERSION}/waypipe-v${TERMUX_PKG_VERSION}.tar.bz2
-TERMUX_PKG_SHA256=cd49f56c4b4574801f8199894ff278262fa6b75f1a989ffe7270cb2735df42f8
+TERMUX_PKG_SHA256=e75e4bb5471e6f413aae1e00b0abddf02ec9f1f56db31d4c50535436c4e7282d
 TERMUX_PKG_AUTO_UPDATE=true
 TERMUX_PKG_DEPENDS="libandroid-spawn, liblz4, libwayland, zstd"
-TERMUX_PKG_BUILD_DEPENDS="libwayland-protocols, scdoc"
+TERMUX_PKG_BUILD_DEPENDS="libwayland-protocols, libwayland-cross-scanner, scdoc"
 # confusing preprocessor feature matrix in waypipe:
 # https://gitlab.freedesktop.org/mstoeckl/waypipe/-/blob/a04f6e3573f19ec7d7a7ef74b3fd1ee52400a2f7/src/video.c#L28-L77
 # -Dwith_dmabuf=disabled appears to cause -Dwith_video=enabled to have no effect,
@@ -29,6 +29,7 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 "
 
 termux_step_pre_configure() {
+	termux_setup_wayland_cross_pkg_config_wrapper
 	LDFLAGS+=" -landroid-spawn"
 }
 

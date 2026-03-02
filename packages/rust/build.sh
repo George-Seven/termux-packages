@@ -1,15 +1,14 @@
+# Contributor: @kcotugno
 TERMUX_PKG_HOMEPAGE=https://www.rust-lang.org/
 TERMUX_PKG_DESCRIPTION="Systems programming language focused on safety, speed and concurrency"
 TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="1.84.0"
+TERMUX_PKG_VERSION="1.93.1"
 TERMUX_PKG_SRCURL=https://static.rust-lang.org/dist/rustc-${TERMUX_PKG_VERSION}-src.tar.xz
-TERMUX_PKG_SHA256=bc2c1639f26814c7b17a323992f1e08c3b01fe88cdff9a27d951987d886e00b3
-_LLVM_MAJOR_VERSION=$(. $TERMUX_SCRIPTDIR/packages/libllvm/build.sh; echo $LLVM_MAJOR_VERSION)
-_LLVM_MAJOR_VERSION_NEXT=$((_LLVM_MAJOR_VERSION + 1))
-_LZMA_VERSION=$(. $TERMUX_SCRIPTDIR/packages/liblzma/build.sh; echo $TERMUX_PKG_VERSION)
-TERMUX_PKG_DEPENDS="clang, libc++, libllvm (<< ${_LLVM_MAJOR_VERSION_NEXT}), lld, openssl, zlib"
+TERMUX_PKG_SHA256=848c9171212c998c069e6979a205a1a44fa3235a463696d62e24701c83596ce0
+TERMUX_PKG_DEPENDS="clang, libandroid-execinfo, libc++, libllvm (<< $TERMUX_LLVM_NEXT_MAJOR_VERSION), lld, openssl, zlib"
 TERMUX_PKG_BUILD_DEPENDS="wasi-libc"
+TERMUX_PKG_SUGGESTS="rust-analyzer"
 TERMUX_PKG_NO_REPLACE_GUESS_SCRIPTS=true
 TERMUX_PKG_NO_STATICSPLIT=true
 TERMUX_PKG_AUTO_UPDATE=true
@@ -18,12 +17,6 @@ bin/llc
 bin/llvm-*
 bin/opt
 bin/sh
-lib/liblzma.a
-lib/liblzma.so
-lib/liblzma.so.${_LZMA_VERSION}
-lib/libtinfo.so.6
-lib/libz.so
-lib/libz.so.1
 share/wasi-sysroot
 "
 
@@ -69,6 +62,11 @@ termux_pkg_auto_update() {
 		return
 	fi
 
+	if [[ "${BUILD_PACKAGES}" == "false" ]]; then
+		echo "INFO: package needs to be updated to ${latest_version}."
+		return
+	fi
+
 	sed \
 		-e "s/^\tlocal BOOTSTRAP_VERSION=.*/\tlocal BOOTSTRAP_VERSION=${TERMUX_PKG_VERSION}/" \
 		-i "${TERMUX_PKG_BUILDER_DIR}/build.sh"
@@ -88,16 +86,38 @@ termux_step_pre_configure() {
 	sed "s|@TERMUX_PKG_API_LEVEL@|${TERMUX_PKG_API_LEVEL}|g" "${p}" \
 		| patch --silent -p1
 
+	# assist with downstream patch methods that bulk-replace
+	# string 'com.termux' throughout the repository
+	local original_prefix_component_one="/data/data/com."
+	local original_prefix_component_two="termux/files/usr"
+	local original_prefix="${original_prefix_component_one}${original_prefix_component_two}"
+	if [[ "$TERMUX_PREFIX" != "$original_prefix" ]]; then
+		local patch="$TERMUX_PKG_BUILDER_DIR/force-allow-edit-vendor.diff"
+		echo "Applying patch: $(basename "$patch")"
+		patch --silent -p1 < "$patch"
+
+		local crate=openssl-probe
+		local crate_src_dir="$(realpath "$(find "$TERMUX_PKG_SRCDIR/vendor" -name "$crate"'*' | sort | tail -n1)")"
+		local crate_dest_dir="$crate_src_dir-custom-termux-prefix"
+		cp -r "$crate_src_dir" "$crate_dest_dir"
+
+		echo "Replacing '$original_prefix' with '$TERMUX_PREFIX' in '$crate_dest_dir/src/lib.rs'"
+		sed -i -e "s|$original_prefix|$TERMUX_PREFIX|g" "$crate_dest_dir/src/lib.rs"
+
+		local dir
+		for dir in "$TERMUX_PKG_SRCDIR"/{,src/tools/cargo,src/tools/miri}; do
+			echo '' >> "$dir/Cargo.toml"
+			echo '[patch.crates-io]' >> "$dir/Cargo.toml"
+			echo "$crate = { path = \"${crate_dest_dir}\" }" >> "$dir/Cargo.toml"
+		done
+	fi
+
 	export RUST_LIBDIR=$TERMUX_PKG_BUILDDIR/_lib
 	mkdir -p $RUST_LIBDIR
 
 	# we can't use -L$PREFIX/lib since it breaks things but we need to link against libLLVM-9.so
 	ln -vfst "${RUST_LIBDIR}" \
-		${TERMUX_PREFIX}/lib/libLLVM-${_LLVM_MAJOR_VERSION}.so
-
-	# rust tries to find static library 'c++_shared'
-	ln -vfs $TERMUX_STANDALONE_TOOLCHAIN/sysroot/usr/lib/$TERMUX_HOST_PLATFORM/libc++_static.a \
-		$RUST_LIBDIR/libc++_shared.a
+		"${TERMUX_PREFIX}/lib/libLLVM-${TERMUX_LLVM_MAJOR_VERSION}.so"
 
 	# https://github.com/termux/termux-packages/issues/18379
 	# NDK r26 multiple ld.lld: error: undefined symbol: __cxa_*
@@ -113,16 +133,7 @@ termux_step_pre_configure() {
 	# but written in a future-proof manner.
 	ln -vfst $RUST_LIBDIR $(echo | $CC -x c - -Wl,-t -shared | grep '\.so$')
 
-	# rust checks libs in PREFIX/lib. It then can't find libc.so and libdl.so because rust program doesn't
-	# know where those are. Putting them temporarly in $PREFIX/lib prevents that failure
-	# https://github.com/termux/termux-packages/issues/11427
-	[[ "${TERMUX_ON_DEVICE_BUILD}" == "true" ]] && return
-	mv $TERMUX_PREFIX/lib/liblzma.a{,.tmp} || :
-	mv $TERMUX_PREFIX/lib/liblzma.so{,.tmp} || :
-	mv $TERMUX_PREFIX/lib/liblzma.so.${_LZMA_VERSION}{,.tmp} || :
-	mv $TERMUX_PREFIX/lib/libtinfo.so.6{,.tmp} || :
-	mv $TERMUX_PREFIX/lib/libz.so.1{,.tmp} || :
-	mv $TERMUX_PREFIX/lib/libz.so{,.tmp} || :
+	ln -vfst "${RUST_LIBDIR}" "${TERMUX_PREFIX}"/lib/libandroid-execinfo.so
 }
 
 termux_step_configure() {
@@ -133,7 +144,7 @@ termux_step_configure() {
 	# like 30 to 40 + minutes ... so lets get it right
 
 	# upstream tests build using versions N and N-1
-	local BOOTSTRAP_VERSION=1.83.0
+	local BOOTSTRAP_VERSION=1.93.0
 	if [[ "${TERMUX_ON_DEVICE_BUILD}" == "false" ]]; then
 		if ! rustup install "${BOOTSTRAP_VERSION}"; then
 			echo "WARN: ${BOOTSTRAP_VERSION} is unavailable, fallback to stable version!"
@@ -145,6 +156,16 @@ termux_step_configure() {
 	fi
 	local RUSTC=$(command -v rustc)
 	local CARGO=$(command -v cargo)
+
+	# rust 1.89.0
+	export WASI_SDK_PATH="${TERMUX_PKG_TMPDIR}/wasi-sdk"
+	rm -fr "${WASI_SDK_PATH}"
+	mkdir -p "${WASI_SDK_PATH}"/{bin,share}
+	ln -fsv "${TERMUX_PREFIX}/share/wasi-sysroot" "${WASI_SDK_PATH}/share/wasi-sysroot"
+	local clang
+	for clang in wasm32-wasip{1,2,3}-clang{,++}; do
+		ln -fsv "$(command -v clang)" "${WASI_SDK_PATH}/bin/${clang}"
+	done
 
 	if [[ "${TERMUX_ON_DEVICE_BUILD}" == "true" ]]; then
 		local dir="${TERMUX_STANDALONE_TOOLCHAIN}/toolchains/llvm/prebuilt/linux-x86_64/bin"
@@ -160,10 +181,11 @@ termux_step_configure() {
 	sed \
 		-e "s|@TERMUX_PREFIX@|${TERMUX_PREFIX}|g" \
 		-e "s|@TERMUX_STANDALONE_TOOLCHAIN@|${TERMUX_STANDALONE_TOOLCHAIN}|g" \
+		-e "s|@TERMUX_HOST_LLVM_BASE_DIR@|${TERMUX_HOST_LLVM_BASE_DIR}|g" \
 		-e "s|@CARGO_TARGET_NAME@|${CARGO_TARGET_NAME}|g" \
 		-e "s|@RUSTC@|${RUSTC}|g" \
 		-e "s|@CARGO@|${CARGO}|g" \
-		"${TERMUX_PKG_BUILDER_DIR}"/config.toml > config.toml
+		"${TERMUX_PKG_BUILDER_DIR}"/bootstrap.toml > bootstrap.toml
 
 	local env_host=$(printf $CARGO_TARGET_NAME | tr a-z A-Z | sed s/-/_/g)
 	export ${env_host}_OPENSSL_DIR=$TERMUX_PREFIX
@@ -185,17 +207,16 @@ termux_step_configure() {
 	"${AR}" rcu "${RUST_LIBDIR}/libsyncfs.a" syncfs.o
 	export CARGO_TARGET_${env_host}_RUSTFLAGS+=" -C link-arg=-l:libsyncfs.a"
 
+	# rust 1.87.0
+	# note: ld.lld: error: undefined reference due to --no-allow-shlib-undefined: backtrace
+	export CARGO_TARGET_${env_host}_RUSTFLAGS+=" -C link-arg=-landroid-execinfo"
+
 	export CARGO_TARGET_${env_host}_RUSTFLAGS+=" -C link-arg=-Wl,-rpath=${TERMUX_PREFIX}/lib -C link-arg=-Wl,--enable-new-dtags"
 
-	export X86_64_UNKNOWN_LINUX_GNU_OPENSSL_LIB_DIR=/usr/lib/x86_64-linux-gnu
-	export X86_64_UNKNOWN_LINUX_GNU_OPENSSL_INCLUDE_DIR=/usr/include
-	export PKG_CONFIG_ALLOW_CROSS=1
-	# for backtrace-sys
-	export CC_x86_64_unknown_linux_gnu=gcc
-	export CFLAGS_x86_64_unknown_linux_gnu="-O2"
-	export RUST_BACKTRACE=full
-
 	unset CC CFLAGS CFLAGS_${env_host} CPP CPPFLAGS CXX CXXFLAGS LD LDFLAGS PKG_CONFIG RANLIB
+
+	# Needed by wasm32-wasip2
+	cargo install wasm-component-ld
 }
 
 termux_step_make() {
@@ -208,17 +229,21 @@ termux_step_make_install() {
 	local job="install"
 	[[ "${TERMUX_ON_DEVICE_BUILD}" == "true" ]] && job="dist"
 
-	"${TERMUX_PKG_SRCDIR}/x.py" ${job} -j ${TERMUX_PKG_MAKE_PROCESSES} --stage 1
+	# rust 1.87.0
+	# https://github.com/termux/termux-packages/issues/25360
+	# build to stage 2 to fix rust-analyzer error
+	"${TERMUX_PKG_SRCDIR}/x.py" "${job}" -j "${TERMUX_PKG_MAKE_PROCESSES}" --stage 2
 
-	# Not putting wasm32-* into config.toml
-	# CI and on device (wasm32*):
+	# wasm32* not added into bootstrap.toml
+	# due to CI and on device build error:
 	# error: could not document `std`
-	"${TERMUX_PKG_SRCDIR}/x.py" install -j ${TERMUX_PKG_MAKE_PROCESSES} --target wasm32-unknown-unknown --stage 1 std
+	"${TERMUX_PKG_SRCDIR}/x.py" install -j "${TERMUX_PKG_MAKE_PROCESSES}" --target wasm32-unknown-unknown --stage 2 std
 	[[ ! -e "${TERMUX_PREFIX}/share/wasi-sysroot" ]] && termux_error_exit "wasi-sysroot not found"
-	"${TERMUX_PKG_SRCDIR}/x.py" install -j ${TERMUX_PKG_MAKE_PROCESSES} --target wasm32-wasip1 --stage 1 std
-	"${TERMUX_PKG_SRCDIR}/x.py" install -j ${TERMUX_PKG_MAKE_PROCESSES} --target wasm32-wasip2 --stage 1 std
+	"${TERMUX_PKG_SRCDIR}/x.py" install -j "${TERMUX_PKG_MAKE_PROCESSES}" --target wasm32-wasip1 --stage 2 std
+	"${TERMUX_PKG_SRCDIR}/x.py" install -j "${TERMUX_PKG_MAKE_PROCESSES}" --target wasm32-wasip2 --stage 2 std
+	"${TERMUX_PKG_SRCDIR}/x.py" install -j "${TERMUX_PKG_MAKE_PROCESSES}" --target wasm32-wasip3 --stage 2 std
 
-	"${TERMUX_PKG_SRCDIR}/x.py" dist -j ${TERMUX_PKG_MAKE_PROCESSES} rustc-dev
+	"${TERMUX_PKG_SRCDIR}/x.py" dist -j "${TERMUX_PKG_MAKE_PROCESSES}" --stage 2 rustc-dev
 
 	# remove version suffix: beta, nightly
 	local VERSION=${TERMUX_PKG_VERSION//~*}
@@ -236,13 +261,7 @@ termux_step_make_install() {
 	done
 
 	cd "$TERMUX_PREFIX/lib"
-	rm -f libc.so libdl.so
-	mv liblzma.a{.tmp,} || :
-	mv liblzma.so{.tmp,} || :
-	mv liblzma.so.${_LZMA_VERSION}{.tmp,} || :
-	mv libtinfo.so.6{.tmp,} || :
-	mv libz.so.1{.tmp,} || :
-	mv libz.so{.tmp,} || :
+	rm -fv libc.so libdl.so
 
 	ln -vfs rustlib/${CARGO_TARGET_NAME}/lib/*.so .
 	ln -vfs lld ${TERMUX_PREFIX}/bin/rust-lld
@@ -298,3 +317,7 @@ termux_step_make_install() {
 		"
 	fi
 }
+
+# References:
+# https://src.fedoraproject.org/rpms/rust/blob/rawhide/f/rust.spec
+# https://gitlab.archlinux.org/archlinux/packaging/packages/rust/-/blob/main/PKGBUILD

@@ -2,10 +2,10 @@ TERMUX_PKG_HOMEPAGE=https://gitlab.gnome.org/GNOME/gspell
 TERMUX_PKG_DESCRIPTION="Spell-checking for GTK applications"
 TERMUX_PKG_LICENSE="LGPL-2.1"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="1.14.0"
-TERMUX_PKG_REVISION=1
-TERMUX_PKG_SRCURL=https://download.gnome.org/sources/gspell/${TERMUX_PKG_VERSION%.*}/gspell-${TERMUX_PKG_VERSION}.tar.xz
-TERMUX_PKG_SHA256=64ea1d8e9edc1c25b45a920e80daf67559d1866ffcd7f8432fecfea6d0fe8897
+TERMUX_PKG_VERSION="1.14.2"
+# https://download.gnome.org/sources/gspell/${TERMUX_PKG_VERSION%.*}/gspell-${TERMUX_PKG_VERSION}.tar.xz
+TERMUX_PKG_SRCURL=https://gitlab.gnome.org/GNOME/gspell/-/archive/${TERMUX_PKG_VERSION}/gspell-${TERMUX_PKG_VERSION}.tar.gz
+TERMUX_PKG_SHA256=cb3634f66ce66cb1022c3f551fd910345d383f74857e7ef09c32ba863070d23c
 TERMUX_PKG_AUTO_UPDATE=true
 TERMUX_PKG_DEPENDS="enchant, glib, gtk3, libicu, pango"
 TERMUX_PKG_BUILD_DEPENDS="g-ir-scanner, glib-cross, valac"

@@ -2,27 +2,17 @@ TERMUX_PKG_HOMEPAGE=https://github.com/KhronosGroup/SPIRV-Tools
 TERMUX_PKG_DESCRIPTION="SPIR-V Tools"
 TERMUX_PKG_LICENSE="Apache-2.0"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="1.4.304.0"
-TERMUX_PKG_SRCURL=https://github.com/KhronosGroup/SPIRV-Tools/archive/refs/tags/vulkan-sdk-${TERMUX_PKG_VERSION}.tar.gz
-TERMUX_PKG_SHA256=ad6e8922538c498e7131bcd82a8d6d9f9863b8d7431c5bfa27dd98e26435be07
+TERMUX_PKG_VERSION="1.4.341.0"
+TERMUX_PKG_SRCURL="https://github.com/KhronosGroup/SPIRV-Tools/archive/refs/tags/vulkan-sdk-${TERMUX_PKG_VERSION}.tar.gz"
+TERMUX_PKG_SHA256=15bfb678138cdf9cd1480dfb952547bbb66b763a735b6d5582578572f5c2e6f9
 TERMUX_PKG_DEPENDS="libc++"
 TERMUX_PKG_BUILD_DEPENDS="spirv-headers (=${TERMUX_PKG_VERSION})"
 TERMUX_PKG_NO_STATICSPLIT=true
 TERMUX_PKG_AUTO_UPDATE=true
-TERMUX_PKG_UPDATE_VERSION_REGEXP="\d+\.\d+\.\d+\.\d+"
+TERMUX_PKG_UPDATE_VERSION_REGEXP="vulkan-sdk-\d+\.\d+\.\d+\.\d+"
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
+-DCMAKE_INSTALL_LIBDIR=$TERMUX__PREFIX__LIB_SUBDIR
+-DCMAKE_INSTALL_INCLUDEDIR=$TERMUX__PREFIX__INCLUDE_SUBDIR
 -DSPIRV-Headers_SOURCE_DIR=${TERMUX_PREFIX}
 -DSPIRV_WERROR=OFF
 "
-
-termux_pkg_auto_update() {
-	# use versions from sdk-* and not vYEAR.* to match spirv-headers
-	local api_url="https://api.github.com/repos/KhronosGroup/SPIRV-Tools/git/refs/tags"
-	local latest_refs_tags=$(curl -s "${api_url}" | jq .[].ref | grep -oP vulkan-sdk-${TERMUX_PKG_UPDATE_VERSION_REGEXP})
-	if [[ -z "${latest_refs_tags}" ]]; then
-		echo "WARN: Unable to get latest refs tags from upstream. Try again later." >&2
-		return
-	fi
-	local latest_version=$(echo "${latest_refs_tags}" | sort -V | tail -n1)
-	termux_pkg_upgrade_version "${latest_version//vulkan-sdk-}"
-}

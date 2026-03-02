@@ -2,29 +2,18 @@ TERMUX_PKG_HOMEPAGE=https://pip.pypa.io/
 TERMUX_PKG_DESCRIPTION="The PyPA recommended tool for installing Python packages"
 TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="24.3.1"
-TERMUX_PKG_SRCURL=https://github.com/pypa/pip/archive/$TERMUX_PKG_VERSION.tar.gz
-TERMUX_PKG_SHA256=1349240eff5fd44f4b9d834d503d87505a6cd0a8ab022f3f1665181d6a719a73
+TERMUX_PKG_VERSION="26.0.1"
+TERMUX_PKG_SRCURL=https://github.com/pypa/pip/archive/refs/tags/$TERMUX_PKG_VERSION.tar.gz
+TERMUX_PKG_SHA256=b70256771f5ea127dae3e4bd6a9c9ab4928d1833519e17b132e76bdeec5a373d
 TERMUX_PKG_AUTO_UPDATE=true
 TERMUX_PKG_UPDATE_TAG_TYPE="newest-tag"
-TERMUX_PKG_UPDATE_VERSION_REGEXP='^\d+\.\d+(\.\d+)?$'
-TERMUX_PKG_DEPENDS="clang, make, pkg-config, python (>= 3.11.1-1)"
-TERMUX_PKG_ANTI_BUILD_DEPENDS="clang"
+TERMUX_PKG_UPDATE_VERSION_REGEXP='\d+(?:\.\d+){1,2}(?!b)' # matches '25.3', '25.3.1' but not '26.0b1'
+TERMUX_PKG_DEPENDS="python (>= 3.11.1-1)"
+TERMUX_PKG_RECOMMENDS="clang, make, pkg-config"
 TERMUX_PKG_BREAKS="python (<< 3.11.1-1)"
 TERMUX_PKG_PLATFORM_INDEPENDENT=true
 TERMUX_PKG_BUILD_IN_SRC=true
-TERMUX_PKG_PYTHON_COMMON_DEPS="wheel, setuptools==69.5.1, docutils, myst_parser, sphinx_copybutton, sphinx_inline_tabs, sphinxcontrib.towncrier, completion"
-
-termux_pkg_auto_update() {
-	local tag
-	tag="$(termux_github_api_get_tag "${TERMUX_PKG_SRCURL}" "${TERMUX_PKG_UPDATE_TAG_TYPE}")"
-
-	if grep -oP "${TERMUX_PKG_UPDATE_VERSION_REGEXP}" <<< "${tag}"; then
-		termux_pkg_upgrade_version "${tag}"
-	else
-		echo "INFO: No update needed, tag '${tag}' is not a stable release."
-	fi
-}
+TERMUX_PKG_PYTHON_COMMON_BUILD_DEPS="docutils, myst_parser, sphinx_copybutton, sphinx_inline_tabs, sphinxcontrib.towncrier, completion"
 
 termux_step_post_make_install() {
 	if [ ! -e "$TERMUX_PYTHON_HOME/site-packages/pip-$TERMUX_PKG_VERSION.dist-info" ]; then
@@ -33,7 +22,7 @@ termux_step_post_make_install() {
 	( # creating pip documentation
 		cd docs/
 		python pip_sphinxext.py
-		sphinx-build -b man -d build/doctrees/man man build/man -c html
+		sphinx-build -b man -d build/doctrees/man man build/man -c html --tag man
 	)
 
 	install -vDm 644 LICENSE.txt -t "$TERMUX_PREFIX/share/licenses/python-pip/"

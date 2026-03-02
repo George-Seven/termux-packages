@@ -3,10 +3,9 @@ TERMUX_PKG_DESCRIPTION="A suite of tools to create shopping lists and maintain f
 TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_LICENSE_FILE="LICENSE"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="0.8.0"
-TERMUX_PKG_REVISION=1
+TERMUX_PKG_VERSION="0.23.0"
 TERMUX_PKG_SRCURL=https://github.com/cooklang/cookcli/archive/refs/tags/v${TERMUX_PKG_VERSION}.tar.gz
-TERMUX_PKG_SHA256=050fcbd7f8f938bd6ffc898a403795101807cfa6d76c787e991c8d90031405c6
+TERMUX_PKG_SHA256=1c978015c0cf1ae424d7e329a8fd54e9efed2509cd500507ee9b13876aa60456
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_AUTO_UPDATE=true
 
@@ -22,10 +21,8 @@ termux_step_pre_configure() {
 }
 
 termux_step_make() {
-	pushd ui
 	npm install
-	npm run build
-	popd
+	npm run build-css
 
 	cargo build --jobs "${TERMUX_PKG_MAKE_PROCESSES}" --target "${CARGO_TARGET_NAME}" --release
 }

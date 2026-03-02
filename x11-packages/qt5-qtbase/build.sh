@@ -2,12 +2,13 @@ TERMUX_PKG_HOMEPAGE=https://www.qt.io/
 TERMUX_PKG_DESCRIPTION="A cross-platform application and UI framework"
 TERMUX_PKG_LICENSE="LGPL-3.0"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="5.15.16"
-TERMUX_PKG_SRCURL="https://download.qt.io/official_releases/qt/${TERMUX_PKG_VERSION%.*}/${TERMUX_PKG_VERSION}/submodules/qtbase-everywhere-opensource-src-${TERMUX_PKG_VERSION}.tar.xz"
-TERMUX_PKG_SHA256=b04815058c18058b6ba837206756a2c87d1391f07a0dcb0dd314f970fd041592
-TERMUX_PKG_DEPENDS="dbus, double-conversion, freetype, glib, harfbuzz, krb5, libandroid-execinfo, libandroid-shmem, libandroid-posix-semaphore, libc++, libice, libicu, libjpeg-turbo, libpng, libsm, libuuid, libx11, libxcb, libxi, libxkbcommon, openssl, pcre2, postgresql, ttf-dejavu, xcb-util-image, xcb-util-keysyms, xcb-util-renderutil, xcb-util-wm, zlib"
+TERMUX_PKG_VERSION="5.15.18"
+TERMUX_PKG_REVISION=2
+TERMUX_PKG_SRCURL="https://download.qt.io/archive/qt/${TERMUX_PKG_VERSION%.*}/${TERMUX_PKG_VERSION}/submodules/qtbase-everywhere-opensource-src-${TERMUX_PKG_VERSION}.tar.xz"
+TERMUX_PKG_SHA256=7b632550ea1048fc10c741e46e2e3b093e5ca94dfa6209e9e0848800e247023b
+TERMUX_PKG_DEPENDS="dbus, double-conversion, freetype, glib, harfbuzz, krb5, libandroid-execinfo, libandroid-posix-semaphore, libandroid-shmem, libc++, libice, libicu, libjpeg-turbo, libpng, libsm, libuuid, libx11, libxcb, libxi, libxkbcommon, opengl, openssl, pcre2, postgresql, ttf-dejavu, vulkan-loader, xcb-util-image, xcb-util-keysyms, xcb-util-renderutil, xcb-util-wm, zlib"
 # gtk3 dependency is a run-time dependency only for the gtk platformtheme subpackage
-TERMUX_PKG_BUILD_DEPENDS="gtk3"
+TERMUX_PKG_BUILD_DEPENDS="gtk3, vulkan-headers"
 TERMUX_PKG_SUGGESTS="qt5-qmake"
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_NO_STATICSPLIT=true
@@ -99,8 +100,8 @@ termux_step_configure () {
 		-no-system-proxies \
 		-no-cups \
 		-system-harfbuzz \
-		-no-opengl \
-		-no-vulkan \
+		-opengl \
+		-vulkan \
 		-qpa xcb \
 		-no-eglfs \
 		-no-gbm \

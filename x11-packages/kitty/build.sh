@@ -2,13 +2,13 @@ TERMUX_PKG_HOMEPAGE=https://sw.kovidgoyal.net/kitty/
 TERMUX_PKG_DESCRIPTION="Cross-platform, fast, feature-rich, GPU based terminal"
 TERMUX_PKG_LICENSE="GPL-3.0"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="0.39.0"
+TERMUX_PKG_VERSION="0.45.0"
 TERMUX_PKG_SRCURL=https://github.com/kovidgoyal/kitty/releases/download/v${TERMUX_PKG_VERSION}/kitty-${TERMUX_PKG_VERSION}.tar.xz
-TERMUX_PKG_SHA256=c3f5d2371ce78ae29475d21d31264d41478357024f267d9f6038bb4bcdbc972b
+TERMUX_PKG_SHA256=93fcba4984a97ccb7d811f487a818d406e681912b6bbb8f0ca426103ddce7ca5
 # fontconfig is dlopen(3)ed:
 TERMUX_PKG_DEPENDS="dbus, fontconfig, harfbuzz, libpng, librsync, libx11, libxkbcommon, littlecms, ncurses, opengl, openssl, python, xxhash, zlib"
 TERMUX_PKG_BUILD_DEPENDS="libxcursor, libxi, libxinerama, libxrandr, simde, xorgproto"
-TERMUX_PKG_PYTHON_COMMON_DEPS="wheel"
+TERMUX_PKG_PYTHON_COMMON_BUILD_DEPS="wheel"
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_HOSTBUILD=true
 TERMUX_PKG_RM_AFTER_INSTALL="
@@ -73,7 +73,7 @@ termux_step_host_build() {
 	make -j "${TERMUX_PKG_MAKE_PROCESSES}" install
 	popd
 	pushd "libxkbcommon-xkbcommon-${ver[libxkbcommon]}" || termux_error_exit "Failed to hostbuild 'libxkbcommon'"
-	${TERMUX_MESON} \
+	${TERMUX_MESON} setup \
 		"${TERMUX_PKG_HOSTBUILD_DIR}/build-xkbcommon" . \
 		--prefix "${TERMUX_PKG_HOSTBUILD_DIR}" \
 		-Denable-bash-completion=false \

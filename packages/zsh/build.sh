@@ -2,13 +2,13 @@ TERMUX_PKG_HOMEPAGE=https://www.zsh.org
 TERMUX_PKG_DESCRIPTION="Shell with lots of features"
 TERMUX_PKG_LICENSE="custom"
 TERMUX_PKG_LICENSE_FILE="LICENCE"
-TERMUX_PKG_MAINTAINER="Joshua Kahn @TomJo2000"
+TERMUX_PKG_MAINTAINER="Joshua Kahn <tom@termux.dev>"
 TERMUX_PKG_VERSION=5.9
-TERMUX_PKG_REVISION=7
+TERMUX_PKG_REVISION=9
 TERMUX_PKG_SRCURL=https://www.zsh.org/pub/zsh-${TERMUX_PKG_VERSION}.tar.xz
 TERMUX_PKG_SHA256=9b8d1ecedd5b5e81fbf1918e876752a7dd948e05c1a0dba10ab863842d45acd5
 TERMUX_PKG_BUILD_DEPENDS="pcre2"
-TERMUX_PKG_DEPENDS="libandroid-support, libcap, ncurses, termux-tools, command-not-found, pcre2"
+TERMUX_PKG_DEPENDS="libandroid-support, libcap, ncurses, termux-tools, pcre2"
 TERMUX_PKG_RECOMMENDS="command-not-found, zsh-completions"
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --disable-gdbm

@@ -3,13 +3,11 @@ TERMUX_PKG_DESCRIPTION="A mixed-level/mixed-signal circuit simulator"
 TERMUX_PKG_LICENSE="BSD 3-Clause, LGPL-2.1"
 TERMUX_PKG_LICENSE_FILE="COPYING"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="43"
-TERMUX_PKG_REVISION=1
+TERMUX_PKG_VERSION="45.2"
 TERMUX_PKG_SRCURL=https://github.com/imr/ngspice/archive/refs/tags/ngspice-${TERMUX_PKG_VERSION}.tar.gz
-TERMUX_PKG_SHA256=4c0443250f777f4e24884263674e33cfe4bdff9756bd846ac7a69ac36192bf73
+TERMUX_PKG_SHA256=3e2a436fb12c5d47d10033ce5b2e2b09b79cde757f9277db350d25071e8e6f86
 TERMUX_PKG_AUTO_UPDATE=true
 TERMUX_PKG_UPDATE_TAG_TYPE="newest-tag"
-TERMUX_PKG_UPDATE_VERSION_SED_REGEXP="s/ngspice-//"
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --enable-cider
 --enable-openmp
@@ -18,6 +16,7 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 --with-readline=yes
 "
 TERMUX_PKG_HOSTBUILD=true
+TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_EXTRA_HOSTBUILD_CONFIGURE_ARGS="
 --enable-cider
 --enable-xspice
@@ -36,6 +35,10 @@ termux_step_host_build() {
 
 termux_step_pre_configure() {
 	LDFLAGS+=" -fopenmp -static-openmp"
+
+	# ERROR: ./lib/ngspice/ivlng.vpi contains undefined symbols: pow
+	LDFLAGS+=" -lm"
+
 	autoreconf -fi
 }
 

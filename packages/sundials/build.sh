@@ -2,9 +2,9 @@ TERMUX_PKG_HOMEPAGE=https://computing.llnl.gov/projects/sundials
 TERMUX_PKG_DESCRIPTION="SUite of Nonlinear and DIfferential/ALgebraic equation Solvers."
 TERMUX_PKG_LICENSE="BSD 3-Clause"
 TERMUX_PKG_MAINTAINER="@termux-user-repository"
-TERMUX_PKG_VERSION="7.2.1"
-TERMUX_PKG_SRCURL=https://github.com/LLNL/sundials/releases/download/v${TERMUX_PKG_VERSION}/sundials-${TERMUX_PKG_VERSION}.tar.gz
-TERMUX_PKG_SHA256=3781e3f7cdf372ca12f7fbe64f561a8b9a507b8a8b2c4d6ce28d8e4df4befbea
+TERMUX_PKG_VERSION="2:7.6.0"
+TERMUX_PKG_SRCURL=https://github.com/LLNL/sundials/releases/download/v${TERMUX_PKG_VERSION#*:}/sundials-${TERMUX_PKG_VERSION#*:}.tar.gz
+TERMUX_PKG_SHA256=0cb6f4bebd2ec13a42714a0654a58431d2cc473b759898b8e5fd8e1797c22712
 TERMUX_PKG_AUTO_UPDATE=true
 TERMUX_PKG_DEPENDS="suitesparse"
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
@@ -25,7 +25,7 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 -DENABLE_PTHREAD=ON
 -DEXAMPLES_INSTALL=OFF
 "
-TERMUX_PKG_BLACKLISTED_ARCHES="arm, i686"
+TERMUX_PKG_EXCLUDED_ARCHES="arm, i686"
 TERMUX_PKG_RM_AFTER_INSTALL="examples/"
 
 termux_step_pre_configure() {

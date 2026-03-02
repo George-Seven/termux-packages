@@ -3,9 +3,9 @@ TERMUX_PKG_DESCRIPTION="A Suite of Sparse matrix packages."
 TERMUX_PKG_GROUPS="science"
 TERMUX_PKG_LICENSE="GPL-3.0"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="7.8.3"
-TERMUX_PKG_SRCURL=https://github.com/DrTimothyAldenDavis/SuiteSparse/archive/refs/tags/v${TERMUX_PKG_VERSION}.tar.gz
-TERMUX_PKG_SHA256=ce39b28d4038a09c14f21e02c664401be73c0cb96a9198418d6a98a7db73a259
+TERMUX_PKG_VERSION="2:7.12.2"
+TERMUX_PKG_SRCURL=https://github.com/DrTimothyAldenDavis/SuiteSparse/archive/refs/tags/v${TERMUX_PKG_VERSION#*:}.tar.gz
+TERMUX_PKG_SHA256=679412daa5f69af96d6976595c1ac64f252287a56e98cc4a8155d09cc7fd69e8
 TERMUX_PKG_DEPENDS="libandroid-complex-math, libgmp, libmpfr, libopenblas"
 TERMUX_PKG_BUILD_IN_SRC=true
 TERMUX_PKG_FORCE_CMAKE=true
@@ -17,7 +17,7 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 -DALLOW_64BIT_BLAS=OFF
 -DGRAPHBLAS_CROSS_TOOLCHAIN_FLAGS_NATIVE=\"-DCMAKE_TOOLCHAIN_FILE=$TERMUX_PKG_BUILDER_DIR/graphblas-host-toolchain.cmake\"
 "
-TERMUX_PKG_BLACKLISTED_ARCHES="arm, i686"
+TERMUX_PKG_EXCLUDED_ARCHES="arm, i686"
 
 termux_step_configure() {
 	termux_setup_cmake
@@ -91,19 +91,19 @@ lib/libccolamd.so.3
 lib/libcholmod.so.5
 lib/libcolamd.so.3
 lib/libcxsparse.so.4
-lib/libgraphblas.so.9
-lib/libklu.so.2
+lib/libgraphblas.so.10
 lib/libklu_cholmod.so.2
+lib/libklu.so.2
 lib/liblagraph.so.1
 lib/liblagraphx.so.1
 lib/libldl.so.3
 lib/libparu.so.1
 lib/librbio.so.4
-lib/libspex.so.3
 lib/libspexpython.so.3
+lib/libspex.so.3
 lib/libspqr.so.4
-lib/libsuitesparse_mongoose.so.3
 lib/libsuitesparseconfig.so.7
+lib/libsuitesparse_mongoose.so.3
 lib/libumfpack.so.6
 "
 	local f

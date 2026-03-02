@@ -16,10 +16,10 @@ if [ "$ARCH" != "$(uname -m)" ]; then
 fi
 
 declare -A CGCT=(
-	["cbt"]="2.43.1-0" # Cross Binutils for Termux
-	["cgt"]="14.2.1-0" # Cross GCCs for Termux
-	["glibc-cgct"]="2.40-2" # Glibc for CGCT
- 	["cgct-headers"]="6.10-0" # Headers for CGCT
+	["cbt"]="2.45.1-0" # Cross Binutils for Termux
+	["cgt"]="15.2.0-0" # Cross GCCs for Termux
+	["glibc-cgct"]="2.42-0" # Glibc for CGCT
+ 	["cgct-headers"]="6.18.6-0" # Headers for CGCT
 )
 
 : "${TERMUX_PKG_TMPDIR:="/tmp"}"
@@ -64,7 +64,10 @@ done
 if [ ! -f "${CGCT_DIR}/lib/libgcc_s.so" ]; then
 	pkgname="gcc-libs"
 	echo "Installing ${pkgname} for CGCT..."
-	curl -L "https://archlinux.org/packages/core/${ARCH}/${pkgname}/download/" -o "${TMPDIR_CGCT}/${pkgname}.pkg.zstd"
+	#curl -L "https://archlinux.org/packages/core/${ARCH}/${pkgname}/download/" -o "${TMPDIR_CGCT}/${pkgname}.pkg.zstd"
+	termux_download "https://archive.archlinux.org/packages/g/gcc-libs/gcc-libs-15.1.1+r7+gf36ec88aa85a-1-x86_64.pkg.tar.zst" \
+		"${TMPDIR_CGCT}/${pkgname}.pkg.zstd" \
+		"6eedd2e4afc53e377b5f1772b5d413de3647197e36ce5dc4a409f993668aa5ed"
 	tar --use-compress-program=unzstd -xf "${TMPDIR_CGCT}/${pkgname}.pkg.zstd" -C "${TMPDIR_CGCT}" usr/lib
 	cp -r "${TMPDIR_CGCT}/usr/lib/"* "${CGCT_DIR}/lib"
 fi

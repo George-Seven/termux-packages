@@ -2,15 +2,15 @@ TERMUX_PKG_HOMEPAGE=https://virgil3d.github.io/
 TERMUX_PKG_DESCRIPTION="A virtual 3D GPU for use inside qemu virtual machines over OpenGLES libraries on Android"
 TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_MAINTAINER="@licy183"
-TERMUX_PKG_VERSION="1.0.1"
+TERMUX_PKG_VERSION="1.3.0"
 _LIBEPOXY_VERSION="1.5.10"
-TERMUX_PKG_REVISION=3
+
 TERMUX_PKG_SRCURL=(
 	https://gitlab.freedesktop.org/virgl/virglrenderer/-/archive/virglrenderer-${TERMUX_PKG_VERSION}/virglrenderer-virglrenderer-${TERMUX_PKG_VERSION}.tar.gz
 	https://github.com/anholt/libepoxy/archive/refs/tags/${_LIBEPOXY_VERSION}.tar.gz
 )
 TERMUX_PKG_SHA256=(
-	446ab3e265f574ec598e77bdfbf0616ee3c77361f0574bec733ba4bac4df730a
+	56170f8caa1bb642a2624b649e3bcca095ec2834814e5c308efc8a85a709e4ce
 	a7ced37f4102b745ac86d6a70a9da399cc139ff168ba6b8002b4d8d43c900c15
 )
 TERMUX_PKG_DEPENDS="angle-android"
@@ -23,10 +23,12 @@ termux_step_post_get_source() {
 termux_step_host_build() {
 	# This package should use the Android NDK toolchain to compile, not
 	# our custom toolchain, so I'd like to compile it in the hostbuild step.
-	export PATH="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
-	export CCTERMUX_HOST_PLATFORM=$TERMUX_HOST_PLATFORM$TERMUX_PKG_API_LEVEL
-	if [ $TERMUX_ARCH = arm ]; then
-		CCTERMUX_HOST_PLATFORM=armv7a-linux-androideabi$TERMUX_PKG_API_LEVEL
+	if [[ "$TERMUX_ON_DEVICE_BUILD" == "false" ]]; then
+		export PATH="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH"
+		export CCTERMUX_HOST_PLATFORM="$TERMUX_HOST_PLATFORM$TERMUX_PKG_API_LEVEL"
+		if [[ "$TERMUX_ARCH" == "arm" ]]; then
+			CCTERMUX_HOST_PLATFORM="armv7a-linux-androideabi$TERMUX_PKG_API_LEVEL"
+		fi
 	fi
 
 	local _INSTALL_PREFIX=$TERMUX_PREFIX/opt/$TERMUX_PKG_NAME
@@ -42,8 +44,13 @@ termux_step_host_build() {
 	chmod +x $PKG_CONFIG
 
 	AR=$(command -v llvm-ar)
-	CC=$(command -v $CCTERMUX_HOST_PLATFORM-clang)
-	CXX=$(command -v $CCTERMUX_HOST_PLATFORM-clang++)
+	if [[ "$TERMUX_ON_DEVICE_BUILD" == "false" ]]; then
+		CC=$(command -v "$CCTERMUX_HOST_PLATFORM-clang")
+		CXX=$(command -v "$CCTERMUX_HOST_PLATFORM-clang++")
+	else
+		CC=$(command -v "$TERMUX_HOST_PLATFORM-clang")
+		CXX=$(command -v "$TERMUX_HOST_PLATFORM-clang++")
+	fi
 	LD=$(command -v ld.lld)
 	CFLAGS=""
 	CPPFLAGS=""

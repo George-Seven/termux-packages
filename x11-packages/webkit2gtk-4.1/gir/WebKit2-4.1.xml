@@ -113,6 +113,11 @@
     <member name="WEBKIT_JAVASCRIPT_ERROR_INVALID_RESULT" nick="invalid-result" value="601"/>
   </enum>  <enum name="WebKitSnapshotError" get-type="webkit_snapshot_error_get_type">
     <member name="WEBKIT_SNAPSHOT_ERROR_FAILED_TO_CREATE" nick="create" value="799"/>
+  </enum>  <enum name="WebKitWebExtensionMatchPatternError" get-type="webkit_web_extension_match_pattern_error_get_type">
+    <member name="WEBKIT_WEB_EXTENSION_MATCH_PATTERN_ERROR_UNKNOWN" nick="unknown" value="899"/>
+    <member name="WEBKIT_WEB_EXTENSION_MATCH_PATTERN_ERROR_INVALID_SCHEME" nick="invalid-scheme" value="808"/>
+    <member name="WEBKIT_WEB_EXTENSION_MATCH_PATTERN_ERROR_INVALID_HOST" nick="invalid-host" value="809"/>
+    <member name="WEBKIT_WEB_EXTENSION_MATCH_PATTERN_ERROR_INVALID_PATH" nick="invalid-path" value="810"/>
   </enum>  <enum name="WebKitUserContentFilterError" get-type="webkit_user_content_filter_error_get_type">
     <member name="WEBKIT_USER_CONTENT_FILTER_ERROR_INVALID_SOURCE" nick="invalid-source" value="0"/>
     <member name="WEBKIT_USER_CONTENT_FILTER_ERROR_NOT_FOUND" nick="not-found" value="1"/>
@@ -266,7 +271,20 @@
     <member name="WEBKIT_AUTOPLAY_ALLOW" nick="allow" value="0"/>
     <member name="WEBKIT_AUTOPLAY_ALLOW_WITHOUT_SOUND" nick="allow-without-sound" value="1"/>
     <member name="WEBKIT_AUTOPLAY_DENY" nick="deny" value="2"/>
-  </enum>  <boxed name="WebKitApplicationInfo" get-type="webkit_application_info_get_type"/>
+  </enum>  <enum name="WebKitXRSessionMode" get-type="webkit_xr_session_mode_get_type">
+    <member name="WEBKIT_XR_SESSION_MODE_INLINE" nick="inline" value="0"/>
+    <member name="WEBKIT_XR_SESSION_MODE_IMMERSIVE_VR" nick="immersive-vr" value="1"/>
+    <member name="WEBKIT_XR_SESSION_MODE_IMMERSIVE_AR" nick="immersive-ar" value="2"/>
+  </enum>  <flags name="WebKitXRSessionFeatures" get-type="webkit_xr_session_features_get_type">
+    <member name="WEBKIT_XR_SESSION_FEATURES_VIEWER" nick="viewer" value="1"/>
+    <member name="WEBKIT_XR_SESSION_FEATURES_LOCAL" nick="local" value="2"/>
+    <member name="WEBKIT_XR_SESSION_FEATURES_LOCAL_FLOOR" nick="local-floor" value="4"/>
+    <member name="WEBKIT_XR_SESSION_FEATURES_BOUNDED_FLOOR" nick="bounded-floor" value="8"/>
+    <member name="WEBKIT_XR_SESSION_FEATURES_UNBOUNDED" nick="unbounded" value="16"/>
+    <member name="WEBKIT_XR_SESSION_FEATURES_HAND_TRACKING" nick="hand-tracking" value="32"/>
+    <member name="WEBKIT_XR_SESSION_FEATURES_HIT_TEST" nick="hit-test" value="64"/>
+  </flags>
+  <boxed name="WebKitApplicationInfo" get-type="webkit_application_info_get_type"/>
   <boxed name="WebKitCredential" get-type="webkit_credential_get_type"/>
   <boxed name="WebKitSecurityOrigin" get-type="webkit_security_origin_get_type"/>
   <class name="WebKitAuthenticationRequest" get-type="webkit_authentication_request_get_type" parents="GObject">
@@ -279,6 +297,8 @@
   <class name="WebKitAutomationSession" get-type="webkit_automation_session_get_type" parents="GObject">
     <property name="id" type="gchararray" flags="235" default-value="NULL"/>
     <signal name="create-web-view" return="WebKitWebView" when="last" detailed="1">
+    </signal>
+    <signal name="will-close" return="void" when="last">
     </signal>
   </class>
   <class name="WebKitBackForwardListItem" get-type="webkit_back_forward_list_item_get_type" parents="GInitiallyUnowned,GObject">
@@ -336,6 +356,8 @@
   </class>
   <class name="WebKitEditorState" get-type="webkit_editor_state_get_type" parents="GObject">
     <property name="typing-attributes" type="guint" flags="225" default-value="0"/>
+    <signal name="changed" return="void" when="last">
+    </signal>
   </class>
   <class name="WebKitFaviconDatabase" get-type="webkit_favicon_database_get_type" parents="GObject">
     <signal name="favicon-changed" return="void" when="last">
@@ -458,7 +480,7 @@
     <property name="enable-javascript" type="gboolean" flags="231" default-value="TRUE"/>
     <property name="auto-load-images" type="gboolean" flags="231" default-value="TRUE"/>
     <property name="load-icons-ignoring-image-load-setting" type="gboolean" flags="-2147483417" default-value="FALSE"/>
-    <property name="enable-offline-web-application-cache" type="gboolean" flags="231" default-value="TRUE"/>
+    <property name="enable-offline-web-application-cache" type="gboolean" flags="-2147483417" default-value="FALSE"/>
     <property name="enable-html5-local-storage" type="gboolean" flags="231" default-value="TRUE"/>
     <property name="enable-html5-database" type="gboolean" flags="231" default-value="TRUE"/>
     <property name="enable-xss-auditor" type="gboolean" flags="-2147483417" default-value="TRUE"/>
@@ -466,7 +488,7 @@
     <property name="enable-plugins" type="gboolean" flags="-2147483417" default-value="FALSE"/>
     <property name="enable-java" type="gboolean" flags="-2147483417" default-value="FALSE"/>
     <property name="javascript-can-open-windows-automatically" type="gboolean" flags="231" default-value="FALSE"/>
-    <property name="enable-hyperlink-auditing" type="gboolean" flags="231" default-value="TRUE"/>
+    <property name="enable-hyperlink-auditing" type="gboolean" flags="-2147483417" default-value="TRUE"/>
     <property name="default-font-family" type="gchararray" flags="231" default-value="sans-serif"/>
     <property name="monospace-font-family" type="gchararray" flags="231" default-value="monospace"/>
     <property name="serif-font-family" type="gchararray" flags="231" default-value="serif"/>
@@ -474,6 +496,7 @@
     <property name="cursive-font-family" type="gchararray" flags="231" default-value="serif"/>
     <property name="fantasy-font-family" type="gchararray" flags="231" default-value="serif"/>
     <property name="pictograph-font-family" type="gchararray" flags="231" default-value="serif"/>
+    <property name="math-font-family" type="gchararray" flags="231" default-value="NULL"/>
     <property name="default-font-size" type="guint" flags="231" default-value="16"/>
     <property name="default-monospace-font-size" type="guint" flags="231" default-value="13"/>
     <property name="minimum-font-size" type="guint" flags="231" default-value="0"/>
@@ -482,7 +505,7 @@
     <property name="enable-developer-extras" type="gboolean" flags="231" default-value="FALSE"/>
     <property name="enable-resizable-text-areas" type="gboolean" flags="231" default-value="TRUE"/>
     <property name="enable-tabs-to-links" type="gboolean" flags="231" default-value="TRUE"/>
-    <property name="enable-dns-prefetching" type="gboolean" flags="231" default-value="FALSE"/>
+    <property name="enable-dns-prefetching" type="gboolean" flags="-2147483417" default-value="FALSE"/>
     <property name="enable-caret-browsing" type="gboolean" flags="231" default-value="FALSE"/>
     <property name="enable-fullscreen" type="gboolean" flags="231" default-value="TRUE"/>
     <property name="print-backgrounds" type="gboolean" flags="231" default-value="TRUE"/>
@@ -499,13 +522,14 @@
     <property name="user-agent" type="gchararray" flags="231" default-value="NULL"/>
     <property name="enable-smooth-scrolling" type="gboolean" flags="231" default-value="TRUE"/>
     <property name="enable-accelerated-2d-canvas" type="gboolean" flags="-2147483417" default-value="FALSE"/>
+    <property name="enable-2d-canvas-acceleration" type="gboolean" flags="231" default-value="TRUE"/>
     <property name="enable-write-console-messages-to-stdout" type="gboolean" flags="231" default-value="FALSE"/>
-    <property name="enable-media-stream" type="gboolean" flags="231" default-value="FALSE"/>
+    <property name="enable-media-stream" type="gboolean" flags="231" default-value="TRUE"/>
     <property name="enable-mock-capture-devices" type="gboolean" flags="231" default-value="FALSE"/>
     <property name="enable-spatial-navigation" type="gboolean" flags="231" default-value="FALSE"/>
     <property name="enable-mediasource" type="gboolean" flags="231" default-value="TRUE"/>
     <property name="enable-encrypted-media" type="gboolean" flags="231" default-value="FALSE"/>
-    <property name="enable-media-capabilities" type="gboolean" flags="231" default-value="FALSE"/>
+    <property name="enable-media-capabilities" type="gboolean" flags="231" default-value="TRUE"/>
     <property name="allow-file-access-from-file-urls" type="gboolean" flags="231" default-value="FALSE"/>
     <property name="allow-universal-access-from-file-urls" type="gboolean" flags="231" default-value="FALSE"/>
     <property name="allow-top-navigation-to-data-urls" type="gboolean" flags="231" default-value="FALSE"/>
@@ -516,6 +540,7 @@
     <property name="media-content-types-requiring-hardware-support" type="gchararray" flags="231" default-value="NULL"/>
     <property name="enable-webrtc" type="gboolean" flags="231" default-value="FALSE"/>
     <property name="disable-web-security" type="gboolean" flags="231" default-value="FALSE"/>
+    <property name="webrtc-udp-ports-range" type="gchararray" flags="231" default-value="NULL"/>
   </class>
   <class name="WebKitURISchemeResponse" get-type="webkit_uri_scheme_response_get_type" parents="GObject">
     <property name="stream" type="GInputStream" flags="234"/>
@@ -572,7 +597,7 @@
     <property name="local-storage-directory" type="gchararray" flags="235" default-value="NULL"/>
     <property name="website-data-manager" type="WebKitWebsiteDataManager" flags="235"/>
     <property name="process-swap-on-cross-site-navigation-enabled" type="gboolean" flags="235" default-value="FALSE"/>
-    <property name="use-system-appearance-for-scrollbars" type="gboolean" flags="231" default-value="TRUE"/>
+    <property name="use-system-appearance-for-scrollbars" type="gboolean" flags="-2147483417" default-value="FALSE"/>
     <property name="memory-pressure-settings" type="WebKitMemoryPressureSettings" flags="234"/>
     <property name="time-zone-override" type="gchararray" flags="235" default-value="NULL"/>
     <signal name="download-started" return="void" when="last">
@@ -672,6 +697,8 @@
     <property name="display-capture-state" type="WebKitMediaCaptureState" flags="227" default-value="WEBKIT_MEDIA_CAPTURE_STATE_NONE"/>
     <property name="web-extension-mode" type="WebKitWebExtensionMode" flags="235" default-value="WEBKIT_WEB_EXTENSION_MODE_NONE"/>
     <property name="default-content-security-policy" type="gchararray" flags="235" default-value="NULL"/>
+    <property name="theme-color" type="GdkRGBA" flags="225"/>
+    <property name="is-immersive-mode-enabled" type="gboolean" flags="225" default-value="FALSE"/>
     <signal name="close" return="void" when="last">
     </signal>
     <signal name="user-message-received" return="gboolean" when="last">
@@ -764,6 +791,9 @@
   <class name="WebKitWebsiteDataAccessPermissionRequest" get-type="webkit_website_data_access_permission_request_get_type" parents="GObject">
     <implements name="WebKitPermissionRequest"/>
   </class>
+  <class name="WebKitXRPermissionRequest" get-type="webkit_xr_permission_request_get_type" parents="GObject">
+    <implements name="WebKitPermissionRequest"/>
+  </class>
   <class name="WebKitPointerLockPermissionRequest" get-type="webkit_pointer_lock_permission_request_get_type" parents="GObject">
     <implements name="WebKitPermissionRequest"/>
   </class>
@@ -799,6 +829,7 @@
   <error-quark function="webkit_print_error_quark" domain="WebKitPrintError"/>
   <error-quark function="webkit_javascript_error_quark" domain="WebKitJavascriptError"/>
   <error-quark function="webkit_snapshot_error_quark" domain="WebKitSnapshotError"/>
+  <error-quark function="webkit_web_extension_match_pattern_error_quark" domain="WebKitWebExtensionMatchPatternError"/>
   <error-quark function="webkit_user_content_filter_error_quark" domain="WebKitUserContentFilterError"/>
   <error-quark function="webkit_favicon_database_error_quark" domain="WebKitFaviconDatabaseError"/>
   <error-quark function="webkit_user_message_error_quark" domain="WebKitUserMessageError"/>
