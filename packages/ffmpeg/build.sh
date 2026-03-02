@@ -77,6 +77,7 @@ termux_step_configure() {
 		--cross-prefix="${TERMUX_HOST_PLATFORM}-" \
 		--disable-indevs \
 		--disable-outdevs \
+		--enable-indev=v4l2 \
 		--enable-indev=lavfi \
 		--disable-static \
 		--disable-symver \
