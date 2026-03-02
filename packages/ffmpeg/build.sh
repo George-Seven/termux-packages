@@ -41,6 +41,7 @@ termux_step_configure() {
 		"aarch64")
 			_ARCH="$TERMUX_ARCH"
 			_EXTRA_CONFIGURE_FLAGS="--enable-neon"
+			CFLAGS+=" -Wno-error=incompatible-pointer-types"
 		;;
 		"arm")
 			_ARCH="armeabi-v7a"
