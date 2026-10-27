@@ -3,13 +3,15 @@ TERMUX_PKG_DESCRIPTION="An open-source implementation of the OpenGL specificatio
 TERMUX_PKG_LICENSE="MIT"
 TERMUX_PKG_LICENSE_FILE="docs/license.rst"
 TERMUX_PKG_MAINTAINER="@termux"
-TERMUX_PKG_VERSION="26.2.5"
-TERMUX_PKG_SRCURL="https://archive.mesa3d.org/mesa-${TERMUX_PKG_VERSION}.tar.xz"
-TERMUX_PKG_SHA256=794b3d1729075dae7ebd47c7283b7ca0cdb5dec668f7f11cc0a5d82f6138a0a5
-TERMUX_PKG_AUTO_UPDATE=true
+TERMUX_PKG_VERSION="26.3.0"
+TERMUX_PKG_REVISION=9
+# The Android VA driver is maintained in the standalone Termux VA Mesa fork.
+TERMUX_PKG_SRCURL="git+https://github.com/George-Seven/mesa-for-android-container"
+TERMUX_PKG_GIT_BRANCH="termux-va-native"
+TERMUX_PKG_AUTO_UPDATE=false
 TERMUX_PKG_DEPENDS="libandroid-shmem, libc++, libdrm, libglvnd, libllvm (<< $TERMUX_LLVM_NEXT_MAJOR_VERSION), libwayland, libx11, libxext, libxfixes, libxshmfence, libxxf86vm, ncurses, vulkan-loader, zlib, zstd"
 TERMUX_PKG_SUGGESTS="mesa-dev"
-TERMUX_PKG_BUILD_DEPENDS="libclc, libwayland-cross-scanner, libwayland-protocols, libxrandr, llvm, llvm-tools, mlir, spirv-tools, xorgproto"
+TERMUX_PKG_BUILD_DEPENDS="libclc, libva, libwayland-cross-scanner, libwayland-protocols, libxrandr, llvm, llvm-tools, mlir, spirv-tools, xorgproto"
 TERMUX_PKG_BREAKS="osmesa, osmesa-demos"
 TERMUX_PKG_CONFLICTS="libmesa, ndk-sysroot (<= 25b), osmesa"
 TERMUX_PKG_REPLACES="libmesa, osmesa"
@@ -28,7 +30,12 @@ TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
 -Dllvm=enabled
 -Dshared-llvm=enabled
 -Dplatforms=x11,wayland
--Dgallium-drivers=llvmpipe,softpipe,virgl,zink
+-Dgallium-va=enabled
+-Dallow-kcmp=disabled
+-Dtermux-va-bridge=enabled
+-Dtermux-va-direct=enabled
+-Dtermux-va-wayland-shim=enabled
+-Dvideo-codecs=all
 -Dgallium-rusticl=true
 -Dglvnd=enabled
 -Dxmlconfig=disabled
@@ -137,7 +144,7 @@ termux_step_host_build() {
 }
 
 termux_step_post_get_source() {
-	# Do not use meson wrap projects
+	# Do not use Meson wrap projects.
 	rm -rf subprojects
 }
 
@@ -185,12 +192,17 @@ termux_step_pre_configure() {
 	export PATH="${_WRAPPER_BIN}:${CARGO_HOME}/bin:${HOSTBUILD_ROOTFS}/usr/bin:${PATH}"
 	export LD_LIBRARY_PATH="${HOSTBUILD_ROOTFS}/usr/lib/x86_64-linux-gnu"
 
-	local _vk_drivers="swrast,virtio"
+	# The Android in-process driver does not use Venus/VirtIO Vulkan. Keep the
+	# build independent of Mesa's venus-protocol subproject, which Termux removes.
+	local _vk_drivers="swrast"
+	local _opengl_drivers="llvmpipe,softpipe,virgl,zink"
 	if [ $TERMUX_ARCH = "arm" ] || [ $TERMUX_ARCH = "aarch64" ]; then
 		_vk_drivers+=",freedreno"
+		_opengl_drivers+=",freedreno"
 		TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" -Dfreedreno-kmds=msm,kgsl"
 	fi
 	TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" -Dvulkan-drivers=$_vk_drivers"
+	TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" -Dgallium-drivers=$_opengl_drivers"
 }
 
 termux_step_post_configure() {
@@ -198,6 +210,34 @@ termux_step_post_configure() {
 }
 
 termux_step_post_make_install() {
+	# Replace hard links in the DRI directory with symlinks.
+	local f1
+	for f1 in $TERMUX_PREFIX/lib/dri/*; do
+		if [ ! -f "${f1}" ]; then
+			continue
+		fi
+		local f2
+		for f2 in $TERMUX_PREFIX/lib/dri/*; do
+			if [ "${f1}" != "${f2}" ] && [ -f "${f2}" ] &&
+			   [ "$(stat -c '%i' "${f1}")" = "$(stat -c '%i' "${f2}")" ]; then
+				ln -sfr "${f1}" "${f2}"
+			fi
+		done
+	done
+
+	# Ship a private copy of Gallium with the in-process VA driver package.
+	# This lets termux-va-native be installed without the full Mesa package while
+	# keeping the DRI alias separate from Mesa's normal gallium driver links.
+	install -d "${TERMUX_PREFIX}/lib/termux-va" \
+		"${TERMUX_PREFIX}/lib/dri"
+	install -m 0755 \
+		"${TERMUX_PREFIX}/lib/libgallium-${TERMUX_PKG_VERSION}-devel.so" \
+		"${TERMUX_PREFIX}/lib/termux-va/libgallium-${TERMUX_PKG_VERSION}-devel.so"
+	mv "${TERMUX_PREFIX}/lib/libtva_drm_shim_wayland.so" \
+		"${TERMUX_PREFIX}/lib/termux-va/libtva_drm_shim.so"
+	ln -sf "../termux-va/libgallium-${TERMUX_PKG_VERSION}-devel.so" \
+		"${TERMUX_PREFIX}/lib/dri/termuxva_native_drv_video.so"
+
 	# Create symlinks
 	ln -sf libEGL_mesa.so "${TERMUX_PREFIX}/lib/libEGL_mesa.so.0"
 	ln -sf libGLX_mesa.so "${TERMUX_PREFIX}/lib/libGLX_mesa.so.0"
