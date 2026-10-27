@@ -219,7 +219,7 @@ termux_step_post_make_install() {
 		local f2
 		for f2 in $TERMUX_PREFIX/lib/dri/*; do
 			if [ "${f1}" != "${f2}" ] && [ -f "${f2}" ] &&
-			   [ "$(stat -c '%i' "${f1}")" = "$(stat -c '%i' "${f2}")" ]; then
+				[ "$(stat -c '%i' "${f1}")" = "$(stat -c '%i' "${f2}")" ]; then
 				ln -sfr "${f1}" "${f2}"
 			fi
 		done
