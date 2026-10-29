@@ -1,0 +1,22 @@
+diff --git a/src/vulkan/malloc.c b/src/vulkan/malloc.c
+index c35183b..8127cad 100644
+--- a/src/vulkan/malloc.c
++++ b/src/vulkan/malloc.c
+@@ -939,7 +939,16 @@ static bool vk_malloc_import(struct vk_malloc *ma, struct vk_memslice *out,
+     }
+ 
+     VkMemoryPropertyFlags flags = ma->props.memoryTypes[ainfo.memoryTypeIndex].propertyFlags;
+-    if (flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) {
++    /* Imported images are commonly GPU-only even when the selected memory
++     * type is host-visible. Mapping an imported dma-buf is optional in that
++     * case and can fail on drivers whose dma-buf import path supports GPU
++     * access but not mmap (for example, some KGSL exporters). Only map
++     * imported memory when the caller explicitly requires host visibility.
++     * Buffers with host_mapped/host_readable set put HOST_VISIBLE in
++     * `required` and retain the existing mapped-memory behavior. */
++    if ((flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) &&
++        (!params->import_handle ||
++         (params->required & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))) {
+         VK(vk->MapMemory(vk->dev, slab->mem, 0, VK_WHOLE_SIZE, 0, &slab->data));
+         slab->coherent = flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+         out->data = (uint8_t *) slab->data + out->offset;
