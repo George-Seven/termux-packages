@@ -6,6 +6,7 @@ TERMUX_PKG_MAINTAINER="@termux"
 TERMUX_PKG_VERSION="9.0.2"
 TERMUX_PKG_REVISION=1
 TERMUX_PKG_SRCURL="https://github.com/FFmpeg/FFmpeg/archive/refs/tags/n${TERMUX_PKG_VERSION}.tar.gz"
+TERMUX_PKG_SHA256=6e374ed621e48faa40639307dff48ba6fe574a509977956d2cce9669b7cc27e9
 TERMUX_PKG_DEPENDS="fontconfig, freetype, fribidi, game-music-emu, harfbuzz, libaom, libandroid-glob, libandroid-shmem, libandroid-stub, libass, libbluray, libbs2b, libbz2, libdav1d, libdvdnav, libdvdread, libiconv, libjxl, liblzma, libmysofa, libmp3lame, libopencore-amr, libopenmpt, libopus, libplacebo, librav1e, libsoxr, libsrt, libssh, libtheora, libva, libv4l, libvidstab, libvmaf, libvo-amrwbenc, libvorbis, libvpx, libwebp, libx264, libx265, libxcb, libxml2, libzimg, libzmq, littlecms, ocl-icd, openssl, rubberband, svt-av1, vulkan-icd, xvidcore, zlib"
 TERMUX_PKG_BUILD_DEPENDS="glslang, opencl-headers, vulkan-headers"
 TERMUX_PKG_CONFLICTS="libav"
