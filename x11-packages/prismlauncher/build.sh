@@ -9,12 +9,14 @@ TERMUX_PKG_GIT_BRANCH="main"
 # Has submodules. Must be cloned from Git.
 TERMUX_PKG_SRCURL="git+https://github.com/Diegiwg/PrismLauncher-Cracked"
 TERMUX_PKG_AUTO_UPDATE=true
+TERMUX_PKG_BLACKLISTED_ARCHES="i686"
+TERMUX_PKG_DEPENDS="cmark, glfw, libarchive, libqrencode, lwjgl3-3.4.1, lwjgl3-3.4.3, openal-soft, openjdk-25, openjdk-25-x, qt6-qtbase-gtk-platformtheme, qt6-qtimageformats, qt6-qtnetworkauth, qt6-qtsvg, zlib"
 # i686 has no JDK 25, so use JDK 21 there. Other architectures can use JDK 25.
-if [[ "$TERMUX_ARCH" == "i686" ]]; then
-	TERMUX_PKG_DEPENDS="cmark, glfw, libarchive, libqrencode, lwjgl3-3.4.1, lwjgl3-3.4.3, openal-soft, openjdk-21, openjdk-21-x, qt6-qtbase-gtk-platformtheme, qt6-qtimageformats, qt6-qtnetworkauth, qt6-qtsvg, zlib"
-else
-	TERMUX_PKG_DEPENDS="cmark, glfw, libarchive, libqrencode, lwjgl3-3.4.1, lwjgl3-3.4.3, openal-soft, openjdk-25, openjdk-25-x, qt6-qtbase-gtk-platformtheme, qt6-qtimageformats, qt6-qtnetworkauth, qt6-qtsvg, zlib"
-fi
+# if [[ "$TERMUX_ARCH" == "i686" ]]; then
+# 	TERMUX_PKG_DEPENDS="cmark, glfw, libarchive, libqrencode, lwjgl3-3.4.1, lwjgl3-3.4.3, openal-soft, openjdk-21, openjdk-21-x, qt6-qtbase-gtk-platformtheme, qt6-qtimageformats, qt6-qtnetworkauth, qt6-qtsvg, zlib"
+# else
+# 	TERMUX_PKG_DEPENDS="cmark, glfw, libarchive, libqrencode, lwjgl3-3.4.1, lwjgl3-3.4.3, openal-soft, openjdk-25, openjdk-25-x, qt6-qtbase-gtk-platformtheme, qt6-qtimageformats, qt6-qtnetworkauth, qt6-qtsvg, zlib"
+# fi
 TERMUX_PKG_SUGGESTS="lwjgl2, lwjgl3-3.2.1, lwjgl3-3.2.2, lwjgl3-3.3.1, lwjgl3-3.3.2, lwjgl3-3.3.3, lwjgl3-3.3.6, lwjgl3-3.4.2"
 TERMUX_PKG_BUILD_DEPENDS="extra-cmake-modules, mesa-dev, qt6-qtimageformats-cross-tools, qt6-qtnetworkauth-cross-tools, qt6-qtsvg-cross-tools, tomlplusplus, vulkan-headers"
 TERMUX_PKG_EXTRA_CONFIGURE_ARGS="
