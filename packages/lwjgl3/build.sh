@@ -9,7 +9,7 @@ TERMUX_PKG_AUTO_UPDATE=false
 # Every version is a subpackage (see the lwjgl3-*.subpackage.sh files),
 # this package only pulls them all in.
 TERMUX_PKG_DEPENDS="lwjgl3-3.2.1, lwjgl3-3.2.2, lwjgl3-3.3.1, lwjgl3-3.3.2, lwjgl3-3.3.3, lwjgl3-3.3.6, lwjgl3-3.4.1, lwjgl3-3.4.2, lwjgl3-3.4.3"
-TERMUX_PKG_BUILD_DEPENDS="libffi, vulkan-headers"
+TERMUX_PKG_BUILD_DEPENDS="libffi, vulkan-headers, xorgproto"
 TERMUX_PKG_RECOMMENDS="openal-soft"
 TERMUX_PKG_BUILD_IN_SRC=true
 
