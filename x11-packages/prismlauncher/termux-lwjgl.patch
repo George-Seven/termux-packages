@@ -1,0 +1,124 @@
+diff --git a/launcher/minecraft/MinecraftInstance.cpp b/launcher/minecraft/MinecraftInstance.cpp
+index 3c2becc84..37bb6750f 100644
+--- a/launcher/minecraft/MinecraftInstance.cpp
++++ b/launcher/minecraft/MinecraftInstance.cpp
+@@ -37,6 +37,9 @@
+ 
+ #include "MinecraftInstance.h"
+ #include "Application.h"
++#include <QDir>
++#include <QFileInfo>
++#include <QRegularExpression>
+ #include "BuildConfig.h"
+ #include "Json.h"
+ #include "QObjectPtr.h"
+@@ -474,6 +476,41 @@ QStringList MinecraftInstance::getClassPath()
+     QStringList jars, nativeJars;
+     auto profile = m_components->getProfile();
+     profile->getLibraryFiles(runtimeContext(), jars, nativeJars, getLocalLibraryPath(), binRoot());
++#if defined(__ANDROID__)
++    const QString termuxPrefix = qEnvironmentVariable("PREFIX");
++    const QString lwjglVersion = m_components->getComponentVersion("org.lwjgl3");
++    const QString termuxJavaDir = QDir(termuxPrefix).absoluteFilePath("share/java/lwjgl3/" + lwjglVersion);
++    const QString termuxNativeDir = QDir(termuxPrefix).absoluteFilePath("lib/lwjgl3/" + lwjglVersion);
++    if (!termuxPrefix.isEmpty() && !lwjglVersion.isEmpty()) {
++        QStringList termuxJars;
++        for (const auto& path : jars) {
++            const QFileInfo info(path);
++            const QString fileName = info.fileName();
++            if (!path.contains("/org/lwjgl/")) {
++                termuxJars.append(path);
++                continue;
++            }
++
++            static const QRegularExpression nativeJarPattern(
++                R"(^lwjgl(?:-([a-z]+))?-natives-linux-(?:arm64|arm32|x64|x86)-.*\.jar$)");
++            const auto match = nativeJarPattern.match(fileName);
++            if (match.hasMatch()) {
++                const QString module = match.captured(1).isEmpty() ? QString() : "_" + match.captured(1);
++                const QString nativeName = "liblwjgl" + module + ".so";
++                if (QFileInfo::exists(QDir(termuxNativeDir).absoluteFilePath(nativeName)))
++                    continue;
++            }
++
++            QString packageJarName = fileName;
++            packageJarName.replace("-" + lwjglVersion, "");
++            if (packageJarName == "lwjgl-unsafe.jar")
++                packageJarName = "lwjgl.jar";
++            const QString packageJar = QDir(termuxJavaDir).absoluteFilePath(packageJarName);
++            termuxJars.append(QFileInfo::exists(packageJar) ? packageJar : path);
++        }
++        jars = termuxJars;
++    }
++#endif
+     return jars;
+ }
+
+@@ -580,6 +582,30 @@ QStringList MinecraftInstance::javaArguments()
+     // custom args go first. we want to override them if we have our own here.
+     args.append(extraArguments());
+ 
++#if defined(__ANDROID__)
++    const QString termuxPrefix = qEnvironmentVariable("PREFIX");
++    const QString lwjglVersion = m_components->getComponentVersion("org.lwjgl3");
++    const QString termuxLibDir = QDir(termuxPrefix).absoluteFilePath("lib");
++    const QString termuxLwjglDir = QDir(termuxLibDir).absoluteFilePath("lwjgl3/" + lwjglVersion);
++    if (!termuxPrefix.isEmpty() && !lwjglVersion.isEmpty() &&
++        QFileInfo::exists(QDir(termuxLwjglDir).absoluteFilePath("liblwjgl.so"))) {
++        args << "-Dorg.lwjgl.librarypath=" + termuxLwjglDir + QDir::listSeparator() + termuxLibDir;
++        args << "-Dorg.lwjgl.system.allocator=system";
++
++        const QString openAL = QDir(termuxLibDir).absoluteFilePath("libopenal.so");
++        if (QFileInfo::exists(openAL))
++            args << "-Dorg.lwjgl.openal.libname=" + openAL;
++
++        const QString shaderc = QDir(termuxLibDir).absoluteFilePath("libshaderc_shared.so");
++        if (QFileInfo::exists(shaderc))
++            args << "-Dorg.lwjgl.shaderc.libname=" + shaderc;
++
++        const QString glfw = QDir(termuxLibDir).absoluteFilePath("libglfw.so");
++        if (QFileInfo::exists(glfw))
++            args << "-Dorg.lwjgl.glfw.libname=" + glfw;
++    }
++#endif
++
+     // OSX dock icon and name
+ #ifdef Q_OS_MAC
+     args << "-Xdock:icon=icon.png";
+diff --git a/launcher/minecraft/launch/LauncherPartLaunch.cpp b/launcher/minecraft/launch/LauncherPartLaunch.cpp
+index e4d3ec1ef..d8064f80e 100644
+--- a/launcher/minecraft/launch/LauncherPartLaunch.cpp
++++ b/launcher/minecraft/launch/LauncherPartLaunch.cpp
+@@ -35,6 +35,8 @@
+ 
+ #include "LauncherPartLaunch.h"
+ 
++#include <QDir>
++#include <QFileInfo>
+ #include <QRegularExpression>
+ #include <QStandardPaths>
+ 
+@@ -43,6 +45,7 @@
+ #include "FileSystem.h"
+ #include "launch/LaunchTask.h"
+ #include "minecraft/MinecraftInstance.h"
++#include "minecraft/PackProfile.h"
+ 
+ #ifdef Q_OS_LINUX
+ #include "gamemode_client.h"
+@@ -113,6 +116,15 @@ void LauncherPartLaunch::executeTask()
+     auto natPath = instance->getNativePath();
+ #ifdef Q_OS_WIN
+     natPath = FS::getPathNameInLocal8bit(natPath);
++#elif defined(__ANDROID__)
++    const QString termuxPrefix = qEnvironmentVariable("PREFIX");
++    const QString lwjglVersion = instance->getPackProfile()->getComponentVersion("org.lwjgl3");
++    const QString termuxLibDir = QDir(termuxPrefix).absoluteFilePath("lib");
++    const QString termuxLwjglDir = QDir(termuxLibDir).absoluteFilePath("lwjgl3/" + lwjglVersion);
++    if (!termuxPrefix.isEmpty() && !lwjglVersion.isEmpty() &&
++        QFileInfo::exists(QDir(termuxLwjglDir).absoluteFilePath("liblwjgl.so"))) {
++        natPath = QStringList{ termuxLwjglDir, termuxLibDir, natPath }.join(QDir::listSeparator());
++    }
+ #endif
+     args << "-Djava.library.path=" + natPath;
+ 

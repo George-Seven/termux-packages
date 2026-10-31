@@ -9,7 +9,7 @@ TERMUX_PKG_AUTO_UPDATE=false
 # Every version is a subpackage (see the lwjgl3-*.subpackage.sh files),
 # this package only pulls them all in.
 TERMUX_PKG_DEPENDS="lwjgl3-3.2.1, lwjgl3-3.2.2, lwjgl3-3.3.1, lwjgl3-3.3.2, lwjgl3-3.3.3, lwjgl3-3.3.6, lwjgl3-3.4.1, lwjgl3-3.4.2, lwjgl3-3.4.3"
-TERMUX_PKG_BUILD_DEPENDS="libffi"
+TERMUX_PKG_BUILD_DEPENDS="libffi, vulkan-headers"
 TERMUX_PKG_RECOMMENDS="openal-soft"
 TERMUX_PKG_BUILD_IN_SRC=true
 
@@ -118,7 +118,12 @@ _lwjgl_build_stubs() {
 _lwjgl_build_java() {
 	local modules_dir="$_LWJGL_SRC/modules/lwjgl"
 	local cp="$_LWJGL_ROOT/stub" m
-	for m in core egl opengl opengles vulkan glfw jemalloc openal stb tinyfd; do
+	local modules=(core egl opengl opengles vulkan glfw jemalloc openal stb tinyfd)
+	# VMA was added after some of the older LWJGL versions in this package.
+	if [[ -d "$modules_dir/vma/src/generated/java" ]]; then
+		modules+=(vma)
+	fi
+	for m in "${modules[@]}"; do
 		mkdir -p "$_LWJGL_OUT/classes/$m"
 		find "$modules_dir/$m/src/main/java" "$modules_dir/$m/src/generated/java" -name '*.java' 2> /dev/null > "$_LWJGL_OUT/$m.list" || true
 		javac -nowarn -source 8 -target 8 -encoding UTF-8 -XDignore.symbol.file -proc:none \
@@ -202,6 +207,20 @@ _lwjgl_build_native() {
 	_lwjgl_compile "$_LWJGL_OUT/obj/lwjgl_tinyfd" "-I$modules_dir/tinyfd/src/main/c $base" \
 		"$modules_dir/tinyfd/src/main/c/tinyfiledialogs.c" "$modules_dir"/tinyfd/src/generated/c/*.c
 	_lwjgl_link lwjgl_tinyfd
+
+	# VMA's generated JNI wrapper is C++ and embeds its implementation from vk_mem_alloc.h.
+	local vma_dir="$modules_dir/vma"
+	if [[ -f "$vma_dir/src/generated/c/org_lwjgl_util_vma_Vma.cpp" ]]; then
+		local vma_flags="-std=c++17 -O2 -fPIC -DNDEBUG -DLWJGL_LINUX -DLWJGL_$arch -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64"
+		vma_flags+=" -I$jdk_home/include -I$jdk_home/include/linux -I$core_c -I$core_c/linux -I$vma_dir/src/main/c"
+		mkdir -p "$_LWJGL_OUT/obj/lwjgl_vma"
+		local vma_src
+		for vma_src in "$vma_dir"/src/generated/c/*.cpp; do
+			$CXX $vma_flags $CPPFLAGS $CXXFLAGS -c "$vma_src" -o "$_LWJGL_OUT/obj/lwjgl_vma/$(basename "${vma_src%.cpp}").o"
+		done
+		$CXX -shared $CXXFLAGS $LDFLAGS -o "$_LWJGL_OUT/lib/liblwjgl_vma.so" "$_LWJGL_OUT/obj/lwjgl_vma"/*.o \
+			-Wl,--no-undefined -Wl,--version-script,"$_LWJGL_SRC/config/linux/version.script" -Wl,-z,noexecstack
+	fi
 }
 
 termux_step_make() {
